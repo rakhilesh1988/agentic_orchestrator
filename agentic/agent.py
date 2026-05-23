@@ -32,11 +32,13 @@ class Agent:
     Perception, Memory, Decision, and Action layers.
     """
 
-    def __init__(self):
+    def __init__(
+        self, perception_provider: str = "openai", decision_provider: str = "openai"
+    ):
         self.llm = LLM()
         self.memory = Memory()
-        self.perception = Perception(self.llm)
-        self.decision = Decision(self.llm)
+        self.perception = Perception(self.llm, provider=perception_provider)
+        self.decision = Decision(self.llm, provider=decision_provider)
         self.action = Action(self.memory.artifact_store)
 
     def _get_tools(self) -> List[Dict]:

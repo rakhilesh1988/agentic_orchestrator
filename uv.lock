@@ -2060,6 +2060,7 @@ dependencies = [
     { name = "httpx" },
     { name = "jsonschema" },
     { name = "mcp" },
+    { name = "pyyaml" },
     { name = "tavily" },
 ]
 
@@ -2072,6 +2073,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "jsonschema", specifier = ">=4.26.0" },
     { name = "mcp", specifier = ">=1.27.1" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "tavily", specifier = ">=1.1.0" },
 ]
 

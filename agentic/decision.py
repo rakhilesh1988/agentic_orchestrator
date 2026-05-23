@@ -19,8 +19,9 @@ class Decision:
     determine if a tool call is needed or if the goal can be satisfied.
     """
 
-    def __init__(self, llm: LLM):
+    def __init__(self, llm: LLM, provider: str = "openai"):
         self.llm = llm
+        self.provider = provider
 
     def plan(
         self,
@@ -80,7 +81,7 @@ class Decision:
                     "type": "json_schema",
                     "schema": DecisionResult.model_json_schema(),
                 },
-                provider="openai",
+                provider=self.provider,
             )
             decision = DecisionResult.model_validate_json(result["text"])
 

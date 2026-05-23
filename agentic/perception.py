@@ -22,8 +22,9 @@ class Perception:
     state summarization using the LLM.
     """
 
-    def __init__(self, llm: LLM):
+    def __init__(self, llm: LLM, provider: str = "openai"):
         self.llm = llm
+        self.provider = provider
 
     def process(
         self, query: str, memory_context: str, run_history: List[str] = None
@@ -70,7 +71,7 @@ class Perception:
                     "type": "json_schema",
                     "schema": PerceptionResult.model_json_schema(),
                 },
-                provider="openai",
+                provider=self.provider,
             )
             return PerceptionResult.model_validate_json(result["text"])
         except Exception as e:
