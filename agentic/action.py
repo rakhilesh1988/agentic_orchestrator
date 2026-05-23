@@ -1,3 +1,10 @@
+"""Action service for the agentic module.
+
+This module handles the execution of MCP tools and the management of
+tool-specific artifacts. It provides a bridge between the cognitive
+Decision layer and the physical tool environment.
+"""
+
 import asyncio
 from typing import Any, Dict, Optional
 
@@ -6,12 +13,26 @@ from agentic.schemas import ActionResponse, ToolCall
 
 
 class Action:
-    """Axiom Action: Pure dispatch. Execution results -> ArtifactStore -> Memory Descriptor."""
+    """
+    Dispatcher and executor for MCP tools.
+
+    Handles tool discovery, asynchronous execution, and raw data persistence
+    using ArtifactStorage.
+    """
 
     def __init__(self, storage: ArtifactStorage):
         self.storage = storage
 
     async def execute(self, tool_call: ToolCall) -> ActionResponse:
+        """
+        Executes a specific tool call and records the outcome.
+
+        Args:
+            tool_call (ToolCall): The tool name and arguments.
+
+        Returns:
+            ActionResponse: Status, raw output, and a short summary.
+        """
         print(f"  >> Executing [{tool_call.name}]...")
 
         # Real MCP tool discovery and execution

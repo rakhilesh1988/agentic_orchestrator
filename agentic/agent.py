@@ -1,3 +1,9 @@
+"""Core orchestrator for the agentic module.
+
+This module implements the iterative cognitive loop (Perception-Memory-Decision-Action)
+based on the Axiom architecture. It manages the high-level flow and state transitions.
+"""
+
 import asyncio
 import os
 import sys
@@ -13,13 +19,18 @@ from agentic.action import Action
 from agentic.decision import Decision
 
 # Import specialized cognitive services
-from agentic.memory import ArtifactStorage, Memory
+from agentic.memory import Memory
 from agentic.perception import Perception
 from llm_gatewayV3.client import LLM
 
 
 class Agent:
-    """Orchestrates the iterative agent loop using specialized cognitive services."""
+    """
+    Orchestrates the iterative agent loop using specialized cognitive services.
+
+    Implements a goal-driven loop that resolves complex queries by coordinating
+    Perception, Memory, Decision, and Action layers.
+    """
 
     def __init__(self):
         self.llm = LLM()
@@ -29,7 +40,12 @@ class Agent:
         self.action = Action(self.memory.artifact_store)
 
     def _get_tools(self) -> List[Dict]:
-        """Discover tools from the MCP server."""
+        """
+        Discovers tools currently registered in the MCP server.
+
+        Returns:
+            List[Dict]: A list of tool definitions including names and schemas.
+        """
         try:
             from mcp_server import mcp
 
@@ -41,10 +57,20 @@ class Agent:
                 }
                 for t in mcp._tool_manager.list_tools()
             ]
-        except:
+        except Exception:
             return []
 
-    async def run(self, query: str, max_iters: int = 10):
+    async def run(self, query: str, max_iters: int = 10) -> str:
+        """
+        Executes the iterative cognitive loop to resolve a user query.
+
+        Args:
+            query (str): The raw input from the user.
+            max_iters (int): The maximum number of iterations before forcing exit.
+
+        Returns:
+            str: The final answer or a summary of why progress stopped.
+        """
         print(f"\n[AGENT START] {query}\n" + "=" * 50)
         run_history = []
 
@@ -88,7 +114,7 @@ class Agent:
 
             if decision.final_answer:
                 print(f" [Decision] Goal satisfying answer generated.")
-                # Record the answer as a tool outcome so Perception can mark the goal as done in the next turn
+                # Record the answer as a tool outcome so Perception sees it next turn
                 self.memory.record_item(
                     f"Goal '{current_goal.description}' resolved: {decision.final_answer}",
                     "tool_outcome",
@@ -119,9 +145,9 @@ class Agent:
         return "Reached maximum iterations without final answer."
 
 
-# if __name__ == "__main__":
-#     agent = Agent()
-#     # Test query
-#     query = "Search for news about Gemini 2.0 and save a fact about its release date."
-#     res = asyncio.run(agent.run(query))
-#     print(f"\n[FINAL RESPONSE]\n{res}")
+if __name__ == "__main__":
+    agent = Agent()
+    # Example complex query
+    QUERY = "Search for news about Gemini 2.0 and save a fact about its release date."
+    res = asyncio.run(agent.run(QUERY))
+    print(f"\n[FINAL RESPONSE]\n{res}")

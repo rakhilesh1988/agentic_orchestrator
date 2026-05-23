@@ -1,3 +1,9 @@
+"""Decision service for the agentic module.
+
+This module picks the single next action (tool call or final answer) for a
+bounded goal, ensuring logical progression and avoiding redundant operations.
+"""
+
 import json
 from typing import Dict, List, Optional
 
@@ -6,7 +12,12 @@ from llm_gatewayV3.client import LLM
 
 
 class Decision:
-    """Axiom Decision: Picks action for ONE bounded goal, respecting facts and preferences."""
+    """
+    Action selector for specific agent goals.
+
+    Evaluates the current goal against memory and perception summaries to
+    determine if a tool call is needed or if the goal can be satisfied.
+    """
 
     def __init__(self, llm: LLM):
         self.llm = llm
@@ -20,6 +31,20 @@ class Decision:
         relevant_artifacts: List[str] = None,
         perception_summary: str = "",
     ) -> DecisionResult:
+        """
+        Picks the next action for a specific bounded goal.
+
+        Args:
+            goal (Goal): The specific goal being addressed in this turn.
+            memory_context (str): Formatted memory content.
+            tools (List[Dict]): List of available MCP tools.
+            original_query (str): The full original request from the user.
+            relevant_artifacts (Optional[List[str]]): List of raw data addresses.
+            perception_summary (str): Reasoning and state summary from Perception.
+
+        Returns:
+            DecisionResult: The chosen tool call or final answer string.
+        """
         artifacts_info = ""
         if relevant_artifacts:
             artifacts_info = (
@@ -37,7 +62,7 @@ class Decision:
         )
 
         try:
-            # Using gpt-4.1-mini for better tool selection and logic execution.
+            # Using gpt-4.1-mini tier for better tool selection and logic execution.
             result = self.llm.chat(
                 prompt=prompt,
                 system=(

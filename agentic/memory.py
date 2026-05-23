@@ -1,3 +1,10 @@
+"""Memory service for the agentic module.
+
+This module handles session state, durable knowledge (facts/preferences),
+and artifact storage. It provides a pure service for reading and recording
+information without LLM dependency.
+"""
+
 import json
 from datetime import datetime
 from pathlib import Path
@@ -16,13 +23,28 @@ STATE_DIR.mkdir(exist_ok=True, parents=True)
 
 
 class ArtifactStorage:
-    """Manages saving and retrieving Pydantic-validated artifacts."""
+    """
+    Manages saving and retrieving Pydantic-validated artifacts.
+
+    Args:
+        storage_dir (Path): The filesystem directory to store artifacts in.
+    """
 
     def __init__(self, storage_dir: Path):
         self.storage_dir = storage_dir
         self.storage_dir.mkdir(exist_ok=True, parents=True)
 
     def save(self, name: str, data: Any) -> Path:
+        """
+        Saves raw data wrapped in a metadata envelope as a JSON artifact.
+
+        Args:
+            name (str): Logical name for the artifact.
+            data (Any): The payload to save.
+
+        Returns:
+            Path: The path to the created JSON file.
+        """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         safe_name = "".join([c if c.isalnum() else "_" for c in name])
         path = self.storage_dir / f"{timestamp}_{safe_name}.json"
@@ -35,17 +57,32 @@ class ArtifactStorage:
         return path
 
     def sync_file(self, filename: str, data: Any) -> Path:
-        """Overwrites a specific file (used for durable state like facts.json)."""
+        """
+        Overwrites or creates a specific file with JSON data.
+
+        Used for maintaining durable state across sessions.
+
+        Args:
+            filename (str): Name of the file in the storage directory.
+            data (Any): The payload to sync.
+
+        Returns:
+            Path: The path to the synced file.
+        """
         path = self.storage_dir / filename
         path.write_text(json.dumps(data, indent=2), encoding="utf-8")
         return path
 
 
 class Memory:
-    """Axiom Memory: Stores categorized facts, preferences, outcomes, and scratchpad entries."""
+    """
+    Categorized memory system for the agent.
+
+    Stores facts, preferences, tool outcomes, and scratchpad entries.
+    Durable knowledge (facts and preferences) is loaded from and synced to disk.
+    """
 
     def __init__(self):
-        # Two storage locations
         self.artifact_store = ArtifactStorage(ARTIFACTS_DIR)
         self.state_store = ArtifactStorage(STATE_DIR)
 
@@ -53,7 +90,7 @@ class Memory:
         self._load_durable_state()
 
     def _load_durable_state(self):
-        """Load facts and preferences from the /state/ folder into current session memory."""
+        """Loads facts and preferences from the state storage into memory."""
         durable_path = STATE_DIR / "durable_state.json"
         if durable_path.exists():
             try:
@@ -67,7 +104,16 @@ class Memory:
                 print(f" [Warning] Could not load durable state: {e}")
 
     def read(self, filter_kinds: Optional[List[str]] = None) -> str:
-        """Fetch categorized context for Perception/Decision."""
+        """
+        Returns a formatted string of categorized memory items.
+
+        Args:
+            filter_kinds (Optional[List[str]]): Specific kinds of memory to return.
+                Defaults to all kinds.
+
+        Returns:
+            str: A formatted block of text suitable for an LLM prompt.
+        """
         if not self.state.items:
             return "No prior history."
 
@@ -85,7 +131,13 @@ class Memory:
         return "\n".join(output)
 
     def record_item(self, content: str, kind: str):
-        """Write a categorized memory item and sync durable state to /state/."""
+        """
+        Records a single item in memory and syncs durable items to disk.
+
+        Args:
+            content (str): The information to record.
+            kind (str): The category of the item (e.g., 'fact', 'tool_outcome').
+        """
         item = MemoryItem(kind=kind, content=content)
         self.state.items.append(item)
         self.state.last_updated = datetime.now().isoformat()
@@ -105,5 +157,10 @@ class Memory:
             self.state_store.save(f"durable_{kind}", item.model_dump())
 
     def record_outcome(self, outcome_summary: str):
-        """Helper for tool outcomes."""
+        """
+        Convenience method to record a tool execution outcome.
+
+        Args:
+            outcome_summary (str): The summary of what happened.
+        """
         self.record_item(outcome_summary, "tool_outcome")

@@ -1,3 +1,10 @@
+"""Perception service for the agentic module.
+
+This module acts as the orchestrator for the cognitive loop. It breaks down
+user queries into discrete goals and evaluates when those goals have been
+satisfied based on memory and action history.
+"""
+
 import json
 from typing import Dict, List, Optional
 
@@ -8,7 +15,12 @@ from llm_gatewayV3.client import LLM
 
 
 class Perception:
-    """Axiom Perception: The Orchestrator. Manages Goals and extracts durable knowledge."""
+    """
+    The orchestrator of the cognitive cycle.
+
+    Responsible for goal management, knowledge extraction, and high-level
+    state summarization using the LLM.
+    """
 
     def __init__(self, llm: LLM):
         self.llm = llm
@@ -16,6 +28,18 @@ class Perception:
     def process(
         self, query: str, memory_context: str, run_history: List[str] = None
     ) -> PerceptionResult:
+        """
+        Processes the current state to update goals and extract knowledge.
+
+        Args:
+            query (str): The original user query.
+            memory_context (str): Categorized memory content from the Memory service.
+            run_history (Optional[List[str]]): Chronological thoughts and action
+                summaries from the current loop execution.
+
+        Returns:
+            PerceptionResult: Updated goal list and discovered facts/preferences.
+        """
         history_str = ""
         if run_history:
             history_str = "\nCHRONOLOGICAL RUN HISTORY:\n- " + "\n- ".join(run_history)
@@ -27,6 +51,7 @@ class Perception:
         )
 
         try:
+            # Using gpt-4.1-mini tier for better orchestration and goal evaluation.
             result = self.llm.chat(
                 prompt=prompt,
                 system=(
