@@ -41,18 +41,28 @@ TAVILY_API_KEY=your_key (for web search)
 # See .env.example for more provider keys
 ```
 
-### 3. Start the LLM Gateway
-The gateway must be running for the agent to function.
-```bash
-cd llm_gatewayV3
-./run.sh
+### 3. Configuration
+1. **Secrets**: Create a `.env` file in the root directory:
+```env
+OPENAI_API_KEY=your_key
+TAVILY_API_KEY=your_key (for web search)
+# See .env.example for more provider keys
 ```
-*Gateway runs on `http://localhost:8101`*
 
-### 4. Run the Agent
-Execute the iterative loop from the root directory:
+2. **Parameters**: Modify `parameter.yaml` to set your query and choose providers for each cognitive layer:
+```yaml
+query: "Search for today's top tech news."
+perception:
+  provider: "openai"
+decision:
+  provider: "openai"
+```
+
+### 4. Run the Application
+You can run the entire ecosystem with a single command from the root directory. This will start the LLM Gateway, wait for it to be ready, and then trigger the agent:
+
 ```bash
-python3 agentic/agent.py
+python3 main.py
 ```
 
 ---
