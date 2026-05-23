@@ -143,11 +143,3 @@ class Agent:
                 run_history.append(f"Turn {i + 1} Result: No action.")
 
         return "Reached maximum iterations without final answer."
-
-
-if __name__ == "__main__":
-    agent = Agent()
-    # Example complex query
-    QUERY = "Search for news about Gemini 2.0 and save a fact about its release date."
-    res = asyncio.run(agent.run(QUERY))
-    print(f"\n[FINAL RESPONSE]\n{res}")
