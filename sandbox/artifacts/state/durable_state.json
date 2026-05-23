@@ -1,0 +1,62 @@
+[
+  {
+    "kind": "fact",
+    "content": "User's mom's birthday is on 15 May 2026",
+    "timestamp": "2026-05-23T18:19:01.824361"
+  },
+  {
+    "kind": "fact",
+    "content": "Gemini 2.0 Flash was released on January 30, 2025.",
+    "timestamp": "2026-05-23T19:45:26.076000"
+  },
+  {
+    "kind": "fact",
+    "content": "Gemini 2.0 Pro was released on February 5, 2025.",
+    "timestamp": "2026-05-23T19:45:26.077305"
+  },
+  {
+    "kind": "fact",
+    "content": "Gemini 2.0 Flash public preview release date is April 9, 2025.",
+    "timestamp": "2026-05-23T19:53:15.389467"
+  },
+  {
+    "kind": "fact",
+    "content": "Claude Shannon was born on April 30, 1916.",
+    "timestamp": "2026-05-23T19:54:40.040224"
+  },
+  {
+    "kind": "fact",
+    "content": "Claude Shannon died on February 24, 2001.",
+    "timestamp": "2026-05-23T19:54:40.041339"
+  },
+  {
+    "kind": "fact",
+    "content": "Claude Shannon's three key contributions to information theory include: 1) Founding information theory and introducing the concept of the bit as a unit of information, 2) Developing the Shannon entropy formula which quantifies information, and 3) Establishing the Shannon limit which defines the maximum data transmission rate of a channel for error-free communication.",
+    "timestamp": "2026-05-23T19:54:40.041896"
+  },
+  {
+    "kind": "fact",
+    "content": "Three family-friendly activities in Tokyo this weekend: Ueno Zoo, Sunshine City entertainment complex, and KZA Tokyo educational park.",
+    "timestamp": "2026-05-23T19:56:48.588333"
+  },
+  {
+    "kind": "fact",
+    "content": "Saturday's weather in Tokyo is cloudy with a 20%-30% chance of rain.",
+    "timestamp": "2026-05-23T19:56:48.589847"
+  },
+  {
+    "kind": "fact",
+    "content": "Sunshine City is mostly indoors with attractions including an aquarium, museum, shops, and Pok\u00e9mon Center, making it the most suitable activity regardless of weather.",
+    "timestamp": "2026-05-23T19:56:48.590693"
+  },
+  {
+    "kind": "fact",
+    "content": "User's mom's birthday is on 15 May 2026",
+    "timestamp": "2026-05-23T19:57:16.851946"
+  },
+  {
+    "kind": "preference",
+    "content": "User wants calendar reminders for their mom's birthday two weeks before and on the day.",
+    "timestamp": "2026-05-23T19:57:35.902366"
+  }
+]

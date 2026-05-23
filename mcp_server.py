@@ -182,6 +182,20 @@ async def fetch_url(url: str, timeout: int = 20) -> dict:
 
 
 @mcp.tool()
+def read_durable_state() -> dict:
+    """Read all consolidated facts and preferences from the durable state storage."""
+    state_path = SANDBOX / "artifacts" / "state" / "durable_state.json"
+    if not state_path.exists():
+        return {"status": "empty", "message": "No durable state found yet."}
+
+    try:
+        data = json.loads(state_path.read_text(encoding="utf-8"))
+        return {"status": "success", "path": str(state_path), "data": data}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@mcp.tool()
 def get_time(timezone: str = "UTC") -> dict:
     """Current time in a named IANA timezone. Example: get_time("Asia/Kolkata")."""
     tz = ZoneInfo(timezone)
@@ -238,11 +252,13 @@ def list_dir(path: str = ".") -> list[dict]:
     out = []
     for child in sorted(p.iterdir()):
         is_dir = child.is_dir()
-        out.append({
-            "name": child.name,
-            "type": "dir" if is_dir else "file",
-            "size_bytes": 0 if is_dir else child.stat().st_size,
-        })
+        out.append(
+            {
+                "name": child.name,
+                "type": "dir" if is_dir else "file",
+                "size_bytes": 0 if is_dir else child.stat().st_size,
+            }
+        )
     return out
 
 
@@ -280,7 +296,9 @@ def edit_file(path: str, find: str, replace: str, replace_all: bool = False) -> 
         raise ValueError(
             f"'{find}' occurs {count} times in '{path}'; pass replace_all=True"
         )
-    new_text = text.replace(find, replace) if replace_all else text.replace(find, replace, 1)
+    new_text = (
+        text.replace(find, replace) if replace_all else text.replace(find, replace, 1)
+    )
     p.write_text(new_text, encoding="utf-8")
     replacements = count if replace_all else 1
     return {

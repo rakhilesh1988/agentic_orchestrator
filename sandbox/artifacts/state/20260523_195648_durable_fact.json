@@ -1,0 +1,11 @@
+{
+  "metadata": {
+    "name": "durable_fact",
+    "timestamp": "2026-05-23T19:56:48.591199"
+  },
+  "payload": {
+    "kind": "fact",
+    "content": "Sunshine City is mostly indoors with attractions including an aquarium, museum, shops, and Pok\u00e9mon Center, making it the most suitable activity regardless of weather.",
+    "timestamp": "2026-05-23T19:56:48.590693"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "metadata": {
+    "name": "durable_fact",
+    "timestamp": "2026-05-23T19:45:26.077793"
+  },
+  "payload": {
+    "kind": "fact",
+    "content": "Gemini 2.0 Pro was released on February 5, 2025.",
+    "timestamp": "2026-05-23T19:45:26.077305"
+  }
+}

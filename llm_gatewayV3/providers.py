@@ -332,10 +332,7 @@ class OpenAICompatProvider(BaseProvider):
                 ).get("type", ""):
                     body["response_format"] = {"type": "json_object"}
                     # OpenAI requirement: messages must contain 'json' for json_object
-                    if (
-                        self.name == "openai"
-                        and "json" not in str(body.get("messages", "")).lower()
-                    ):
+                    if "json" not in str(body.get("messages", "")).lower():
                         if body["messages"] and body["messages"][0]["role"] == "system":
                             body["messages"][0]["content"] += " Respond in JSON."
                         else:
@@ -1132,6 +1129,9 @@ def build_providers(cache_store):
     - groq worker default: openai/gpt-oss-120b (was llama-3.3-70b-versatile, now moved to router pool)
     """
     out = {}
+    print(
+        f" [Debug] GITHUB_ACCESS_TOKEN present: {bool(os.getenv('GITHUB_ACCESS_TOKEN'))}"
+    )
     if k := os.getenv("OPENAI_API_KEY"):
         out["openai"] = OpenAIProvider(k, os.getenv("OPENAI_MODEL", "gpt-4o"))
     if k := os.getenv("GEMINI_API_KEY"):

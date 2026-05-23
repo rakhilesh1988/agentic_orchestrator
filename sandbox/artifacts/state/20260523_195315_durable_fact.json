@@ -1,0 +1,11 @@
+{
+  "metadata": {
+    "name": "durable_fact",
+    "timestamp": "2026-05-23T19:53:15.390739"
+  },
+  "payload": {
+    "kind": "fact",
+    "content": "Gemini 2.0 Flash public preview release date is April 9, 2025.",
+    "timestamp": "2026-05-23T19:53:15.389467"
+  }
+}

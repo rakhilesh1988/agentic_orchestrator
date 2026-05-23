@@ -1,219 +1,127 @@
-import json
+import asyncio
 import os
 import sys
-import time
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
-
-from pydantic import BaseModel, ValidationError
+from typing import Dict, List
 
 # Ensure project root is in sys.path so llm_gatewayV3 can be imported
 ROOT_DIR = Path(__file__).parent.parent.resolve()
 if str(ROOT_DIR) not in sys.path:
     sys.path.append(str(ROOT_DIR))
 
-# Import separated schemas
-from agentic.schemas import (
-    ActionResponse,
-    DecisionResult,
-    MemoryArtifact,
-    PerceptionResult,
-    PlanStep,
-)
+from agentic.action import Action
+from agentic.decision import Decision
+
+# Import specialized cognitive services
+from agentic.memory import ArtifactStorage, Memory
+from agentic.perception import Perception
 from llm_gatewayV3.client import LLM
-
-# Configuration
-AGENTIC_ROOT = Path(__file__).parent.parent
-ARTIFACTS_DIR = AGENTIC_ROOT / "sandbox" / "artifacts"
-ARTIFACTS_DIR.mkdir(exist_ok=True, parents=True)
-
-# ────────────────────────────────────────────────────────────────────────────
-# Artifact Storage
-# ────────────────────────────────────────────────────────────────────────────
-
-
-class ArtifactStorage:
-    """Manages saving and retrieving Pydantic-validated artifacts."""
-
-    def __init__(self, storage_dir: Path = ARTIFACTS_DIR):
-        self.storage_dir = storage_dir
-
-    def save(self, name: str, model: BaseModel) -> Path:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        safe_name = "".join([c if c.isalnum() else "_" for c in name])
-        path = self.storage_dir / f"{timestamp}_{safe_name}.json"
-
-        data = {
-            "metadata": {
-                "name": name,
-                "timestamp": datetime.now().isoformat(),
-                "model_type": model.__class__.__name__,
-            },
-            "payload": model.model_dump(),
-        }
-
-        path.write_text(json.dumps(data, indent=2), encoding="utf-8")
-        return path
-
-    def load_latest(
-        self, name_pattern: str, model_class: type[BaseModel]
-    ) -> Optional[BaseModel]:
-        """Load the most recent artifact matching a name pattern."""
-        files = sorted(self.storage_dir.glob(f"*_{name_pattern}.json"), reverse=True)
-        if not files:
-            return None
-        try:
-            data = json.loads(files[0].read_text(encoding="utf-8"))
-            return model_class.model_validate(data["payload"])
-        except Exception:
-            return None
-
-
-# ────────────────────────────────────────────────────────────────────────────
-# Cognitive Layers
-# ────────────────────────────────────────────────────────────────────────────
-
-
-class Perception:
-    def __init__(self, llm: LLM):
-        self.llm = llm
-
-    def process(self, input_text: str) -> PerceptionResult:
-        result = self.llm.chat(
-            prompt=f"Analyze: {input_text}",
-            system="You are the Perception layer. Extract intent, entities, sentiment, and urgency.",
-            response_format={
-                "type": "json_schema",
-                "schema": PerceptionResult.model_json_schema(),
-            },
-            auto_route="perception",
-        )
-        try:
-            return PerceptionResult.model_validate_json(result["text"])
-        except (ValidationError, json.JSONDecodeError):
-            return PerceptionResult(intent=input_text, entities=[])
-
-
-class Memory:
-    def __init__(self, llm: LLM, storage: ArtifactStorage):
-        self.llm = llm
-        self.storage = storage
-
-    def update(self, thread_id: str, new_info: str) -> MemoryArtifact:
-        existing = self.storage.load_latest(f"memory_{thread_id}", MemoryArtifact)
-        context_str = existing.summary if existing else "No prior history."
-
-        prompt = f"Existing Memory: {context_str}\nNew Info: {new_info}"
-
-        result = self.llm.chat(
-            prompt=prompt,
-            system="You are the Memory layer. Consolidate info into a summary and extract key facts.",
-            response_format={
-                "type": "json_schema",
-                "schema": MemoryArtifact.model_json_schema(),
-            },
-            auto_route="memory",
-        )
-        try:
-            mem = MemoryArtifact.model_validate_json(result["text"])
-            self.storage.save(f"memory_{thread_id}", mem)
-            return mem
-        except Exception:
-            mem = MemoryArtifact(summary=new_info)
-            self.storage.save(f"memory_{thread_id}", mem)
-            return mem
-
-
-class Decision:
-    def __init__(self, llm: LLM):
-        self.llm = llm
-
-    def plan(
-        self, objective: PerceptionResult, memory: MemoryArtifact
-    ) -> DecisionResult:
-        prompt = (
-            f"Objective: {objective.model_dump_json()}\n"
-            f"Context: {memory.summary}\n"
-            f"Facts: {memory.key_facts}"
-        )
-
-        result = self.llm.chat(
-            prompt=prompt,
-            system="You are the Decision layer. Create a plan with steps (thought, tool, args).",
-            response_format={
-                "type": "json_schema",
-                "schema": DecisionResult.model_json_schema(),
-            },
-            auto_route="decision",
-        )
-        try:
-            return DecisionResult.model_validate_json(result["text"])
-        except Exception:
-            return DecisionResult(
-                steps=[PlanStep(thought="Direct answer", tool="final_answer", args={})],
-                rationale="Fallback",
-            )
-
-
-class Action:
-    def __init__(self, storage: ArtifactStorage):
-        self.storage = storage
-
-    def execute(self, step: PlanStep) -> ActionResponse:
-        print(f"  >> Executing [{step.tool}] with args: {step.args}")
-        response = ActionResponse(
-            status="success", output=f"Simulated output for {step.tool}"
-        )
-        path = self.storage.save(f"action_{step.tool}", response)
-        response.artifact_path = str(path)
-        return response
-
-
-# ────────────────────────────────────────────────────────────────────────────
-# Agent Orchestrator
-# ────────────────────────────────────────────────────────────────────────────
 
 
 class Agent:
+    """Orchestrates the iterative agent loop using specialized cognitive services."""
+
     def __init__(self):
         self.llm = LLM()
-        self.storage = ArtifactStorage()
+        self.memory = Memory()
         self.perception = Perception(self.llm)
-        self.memory = Memory(self.llm, self.storage)
         self.decision = Decision(self.llm)
-        self.action = Action(self.storage)
+        self.action = Action(self.memory.artifact_store)
 
-    def run(self, user_input: str, thread_id: str = "prod_session"):
-        print(f"\n--- Agent Loop Start: '{user_input}' ---")
+    def _get_tools(self) -> List[Dict]:
+        """Discover tools from the MCP server."""
+        try:
+            from mcp_server import mcp
 
-        perceived = self.perception.process(user_input)
-        print(
-            f" [Perception] Intent: {perceived.intent} | Urgency: {perceived.urgency}"
-        )
+            return [
+                {
+                    "name": t.name,
+                    "description": t.description,
+                    "input_schema": t.parameters,
+                }
+                for t in mcp._tool_manager.list_tools()
+            ]
+        except:
+            return []
 
-        mem = self.memory.update(thread_id, user_input)
-        print(f" [Memory] Summary length: {len(mem.summary)} chars")
+    async def run(self, query: str, max_iters: int = 10):
+        print(f"\n[AGENT START] {query}\n" + "=" * 50)
+        run_history = []
 
-        decision = self.decision.plan(perceived, mem)
-        print(f" [Decision] Strategy: {decision.rationale}")
-        print(f" [Decision] Plan: {len(decision.steps)} steps")
+        for i in range(max_iters):
+            print(f"\n--- Iteration {i + 1} ---")
 
-        results = []
-        for i, step in enumerate(decision.steps):
-            print(f" [Action] Step {i + 1}/{len(decision.steps)}: {step.thought}")
-            res = self.action.execute(step)
-            results.append(res)
+            # 1. Read Memory
+            context = self.memory.read()
 
-        print("--- Agent Loop Complete ---\n")
-        return {
-            "perceived": perceived,
-            "memory": mem,
-            "decision": decision,
-            "actions": results,
-        }
+            # 2. Perceive (Orchestrator: Updates Goal List & Extracts Knowledge)
+            perception = self.perception.process(
+                query, context, run_history=run_history
+            )
+
+            # RECORD NEW KNOWLEDGE (Facts/Preferences)
+            for item in perception.new_knowledge:
+                print(f" [Perception] Discovered {item.kind}: {item.content}")
+                self.memory.record_item(item.content, item.kind)
+
+            # Check if all goals are done
+            unfinished = [g for g in perception.goals if not g.is_done]
+            if not unfinished:
+                print(" [Perception] All goals satisfied.")
+                return perception.context_summary
+
+            current_goal = unfinished[0]
+            print(f" [Perception] Current Goal: {current_goal.description}")
+
+            # 3. Decide (Pick action for the current bounded goal)
+            tools = self._get_tools()
+            decision = self.decision.plan(
+                current_goal,
+                context,
+                tools,
+                original_query=query,
+                relevant_artifacts=perception.relevant_artifacts,
+                perception_summary=perception.context_summary,
+            )
+            print(f" [Decision] Thought: {decision.thought}")
+            run_history.append(f"Turn {i + 1} Thought: {decision.thought}")
+
+            if decision.final_answer:
+                print(f" [Decision] Goal satisfying answer generated.")
+                # Record the answer as a tool outcome so Perception can mark the goal as done in the next turn
+                self.memory.record_item(
+                    f"Goal '{current_goal.description}' resolved: {decision.final_answer}",
+                    "tool_outcome",
+                )
+                run_history.append(f"Turn {i + 1} Result: {decision.final_answer}")
+                continue
+
+            if decision.tool_call:
+                # 4. Action (Pure Dispatch)
+                tool_call = decision.tool_call
+                action_res = await self.action.execute(tool_call)
+
+                # 5. Record outcome back to Memory
+                print(f" [Action] Result: {action_res.status}")
+                self.memory.record_item(action_res.output_summary, "tool_outcome")
+                run_history.append(
+                    f"Turn {i + 1} Action: {tool_call.name} -> {action_res.status}"
+                )
+            else:
+                # Fallback
+                print(" [Decision] No action provided. Recording status to memory.")
+                self.memory.record_item(
+                    f"Decision for goal '{current_goal.description}' provided no action or answer.",
+                    "scratchpad",
+                )
+                run_history.append(f"Turn {i + 1} Result: No action.")
+
+        return "Reached maximum iterations without final answer."
 
 
-if __name__ == "__main__":
-    agent = Agent()
-    agent.run("Find the weather in Tokyo and tell me if I need an umbrella.")
+# if __name__ == "__main__":
+#     agent = Agent()
+#     # Test query
+#     query = "Search for news about Gemini 2.0 and save a fact about its release date."
+#     res = asyncio.run(agent.run(query))
+#     print(f"\n[FINAL RESPONSE]\n{res}")
