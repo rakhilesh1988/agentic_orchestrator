@@ -1,10 +1,13 @@
 """Pydantic v2 request/response models for llm_gatewayV3."""
+
 from typing import Any, Literal, Optional, Union
-from pydantic import BaseModel, Field, ConfigDict
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ToolDef(BaseModel):
     """Canonical tool definition. Schema is JSON-Schema (typically from Pydantic)."""
+
     name: str
     description: str = ""
     input_schema: dict[str, Any] = Field(default_factory=dict)
@@ -37,6 +40,7 @@ class ResponseFormat(BaseModel):
 
 class ChatRequest(BaseModel):
     """Backward-compatible request — every new field is optional."""
+
     messages: Optional[list[dict[str, Any]]] = None
     prompt: Optional[str] = None
     system: Optional[Union[str, list[CacheableSystemBlock]]] = None
@@ -59,9 +63,46 @@ class ChatRequest(BaseModel):
     auto_route: Optional[Literal["perception", "memory", "decision"]] = None
 
 
+class EmbedRequest(BaseModel):
+    text: str
+    task_type: Optional[str] = None
+    provider: Optional[str] = "ollama"
+    model: Optional[str] = "nomic-embed-text"
+
+
+class EmbedResponse(BaseModel):
+    embedding: list[float]
+    dimension: int
+    provider: str
+    model: str
+    latency_ms: int
+
+
+class FaissIndexMeta(BaseModel):
+    index_name: str
+    dimension: int
+    count: int
+    source_file: str
+    items: list[str]
+    created_at: str
+
+
+class FaissSearchResult(BaseModel):
+    text: str
+    distance: float
+
+
+class FaissSearchResponse(BaseModel):
+    query: str
+    index_name: str
+    results: list[FaissSearchResult]
+    latency_ms: int
+
+
 class RouterDecision(BaseModel):
     """What the router agent decided. Echoed back on the worker response so the
     agentic-world caller can see which model was picked and why."""
+
     role: Literal["perception", "memory", "decision"]
     tier: Literal["TINY", "LARGE", "HUGE"]
     estimated_tokens: int
@@ -70,7 +111,9 @@ class RouterDecision(BaseModel):
     router_latency_ms: int
     chosen_worker_provider: Optional[str] = None
     chosen_worker_model: Optional[str] = None
-    fallback_used: bool = False  # true if router LLM failed and tier was decided by token-count rule
+    fallback_used: bool = (
+        False  # true if router LLM failed and tier was decided by token-count rule
+    )
 
 
 class ChatResponse(BaseModel):

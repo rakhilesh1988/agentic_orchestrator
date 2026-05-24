@@ -18,7 +18,14 @@ import db
 import providers as P
 from cache import GeminiCache
 from router import DEFAULT_ROUTER_ORDER, LIMITS, SHORTCUTS, Router, RouterPool, resolve
-from schemas import ChatRequest, ChatResponse, RouterDecision, ToolCall
+from schemas import (
+    ChatRequest,
+    ChatResponse,
+    EmbedRequest,
+    EmbedResponse,
+    RouterDecision,
+    ToolCall,
+)
 
 DEFAULT_ORDER = [
     "openai",
@@ -614,6 +621,45 @@ async def chat(req: ChatRequest):
         503,
         f"all providers unavailable. attempts: {all_attempts}. last_error: {last_err}",
     )
+
+
+@app.post("/v1/embed")
+async def embed(req: EmbedRequest):
+    provider_name = req.provider or "ollama"
+    router = app.state.router
+
+    if provider_name not in router.providers:
+        raise HTTPException(
+            400,
+            f"unknown provider '{provider_name}'. Try one of: {list(router.providers)}",
+        )
+
+    provider = router.providers[provider_name]
+    t0 = time.time()
+
+    try:
+        # Prepend task_type if provided (optional convention for nomic/etc)
+        input_text = f"{req.task_type}: {req.text}" if req.task_type else req.text
+
+        result = await provider.embed(input_text, model=req.model)
+        latency = int((time.time() - t0) * 1000)
+
+        return EmbedResponse(
+            embedding=result["embedding"],
+            dimension=result["dimension"],
+            provider=provider_name,
+            model=result["model"],
+            latency_ms=latency,
+        ).model_dump()
+
+    except P.ProviderError as e:
+        raise HTTPException(502, f"{provider_name} failed: {e}")
+    except NotImplementedError:
+        raise HTTPException(
+            400, f"Provider '{provider_name}' does not support embeddings"
+        )
+    except Exception as e:
+        raise HTTPException(500, f"Embedding failed: {e}")
 
 
 @app.get("/v1/providers")

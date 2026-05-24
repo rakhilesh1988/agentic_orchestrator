@@ -141,6 +141,9 @@ class BaseProvider:
         if result["text"]:
             yield result["text"]
 
+    async def embed(self, text: str, *, model: Optional[str] = None) -> dict:
+        raise NotImplementedError
+
 
 # ────────────────────────────────────────────────────────────────────────────
 # OpenAI-compatible providers
@@ -1067,6 +1070,26 @@ class OllamaProvider(BaseProvider):
                 "model": m,
                 "tool_call_dialect": dialect,
                 "reasoning_applied": False,
+            }
+
+    async def embed(self, text: str, *, model: Optional[str] = None) -> dict:
+        m = model or self.model
+        body = {"model": m, "input": text}
+        async with httpx.AsyncClient(timeout=180) as c:
+            r = await c.post(f"{self.base_url}/api/embed", json=body)
+            if r.status_code != 200:
+                raise ProviderError(
+                    f"ollama HTTP {r.status_code}: {r.text[:300]}", status=r.status_code
+                )
+            d = r.json()
+            embeddings = d.get("embeddings") or []
+            if not embeddings:
+                raise ProviderError("ollama returned no embeddings")
+            vec = embeddings[0]
+            return {
+                "embedding": vec,
+                "dimension": len(vec),
+                "model": m,
             }
 
 

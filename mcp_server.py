@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 import os
 import threading
+import time
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -26,6 +27,26 @@ import httpx
 from ddgs import DDGS
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
+
+from llm_gatewayV3.schemas import (
+    FaissIndexMeta,
+    FaissSearchResponse,
+    FaissSearchResult,
+)
+
+try:
+    import faiss
+    import numpy as np
+except ImportError:
+    faiss = None
+    np = None
+
+try:
+    import pypdf
+    from bs4 import BeautifulSoup
+except ImportError:
+    BeautifulSoup = None
+    pypdf = None
 
 MAX_SEARCH_RESULTS = 5  # hard cap — Tavily prices per result
 
@@ -306,6 +327,225 @@ def edit_file(path: str, find: str, replace: str, replace_all: bool = False) -> 
         "path": path,
         "replacements": replacements,
         "size_bytes": p.stat().st_size,
+    }
+
+
+@mcp.tool()
+async def create_faiss_index(json_path: str, index_name: str = "default") -> dict:
+    """
+    Read a JSON file from the sandbox, embed its contents via the LLM Gateway,
+    and save a FAISS index plus metadata to disk.
+    Example: create_faiss_index("artifacts/state/durable_state.json", "durable_state")
+    """
+    if faiss is None or np is None:
+        raise RuntimeError("faiss or numpy not installed on server")
+
+    p = _safe(json_path)
+    if not p.exists():
+        raise ValueError(f"File '{json_path}' does not exist")
+
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+    except Exception as e:
+        raise ValueError(f"Failed to parse JSON from '{json_path}': {e}")
+
+    # Decide what to embed.
+    to_embed = []
+    if isinstance(data, list):
+        to_embed = [
+            json.dumps(item) if isinstance(item, (dict, list)) else str(item)
+            for item in data
+        ]
+    else:
+        to_embed = [json.dumps(data)]
+
+    if not to_embed:
+        return {"ok": False, "error": "No content to embed"}
+
+    embeddings = []
+    dimension = 0
+    # Use the gateway port from env or default to 8101
+    port = os.getenv("GATEWAY_V3_PORT", "8101")
+    gateway_url = f"http://localhost:{port}/v1/embed"
+
+    async with httpx.AsyncClient(timeout=60) as client:
+        for text in to_embed:
+            try:
+                resp = await client.post(gateway_url, json={"text": text})
+                resp.raise_for_status()
+                res = resp.json()
+                embeddings.append(res["embedding"])
+                dimension = res["dimension"]
+            except Exception as e:
+                return {
+                    "ok": False,
+                    "error": f"Gateway call failed for item: {str(e)}",
+                    "hint": "Ensure LLM Gateway is running on port " + port,
+                }
+
+    if not embeddings:
+        return {"ok": False, "error": "No embeddings generated"}
+
+    # Create FAISS index
+    vectors = np.array(embeddings).astype("float32")
+    index = faiss.IndexFlatL2(dimension)
+    index.add(vectors)
+
+    # Save to sandbox/indices/
+    index_dir = SANDBOX / "indices"
+    index_dir.mkdir(exist_ok=True)
+
+    faiss_path = index_dir / f"{index_name}.faiss"
+    meta_path = index_dir / f"{index_name}.json"
+
+    faiss.write_index(index, str(faiss_path))
+
+    # Save metadata using Pydantic model for validation and serialization
+    meta = FaissIndexMeta(
+        index_name=index_name,
+        dimension=dimension,
+        count=len(to_embed),
+        source_file=json_path,
+        items=to_embed,
+        created_at=datetime.now().isoformat(),
+    )
+    meta_path.write_text(json.dumps(meta.model_dump(), indent=2), encoding="utf-8")
+
+    return {
+        "ok": True,
+        "index_path": str(faiss_path.relative_to(SANDBOX)),
+        "meta_path": str(meta_path.relative_to(SANDBOX)),
+        "dimension": dimension,
+        "count": len(to_embed),
+    }
+
+
+@mcp.tool()
+async def search_faiss_index(
+    query: str, index_name: str = "default", top_k: int = 3
+) -> dict:
+    """
+    Search a previously created FAISS index using a text query.
+    Example: search_faiss_index("When was Claude Shannon born?", "durable_state")
+    """
+    if faiss is None or np is None:
+        raise RuntimeError("faiss or numpy not installed on server")
+
+    index_dir = SANDBOX / "indices"
+    faiss_path = index_dir / f"{index_name}.faiss"
+    meta_path = index_dir / f"{index_name}.json"
+
+    if not faiss_path.exists() or not meta_path.exists():
+        raise ValueError(f"Index '{index_name}' not found")
+
+    t0 = time.time()
+
+    # Load Metadata
+    try:
+        meta_raw = json.loads(meta_path.read_text(encoding="utf-8"))
+        meta = FaissIndexMeta(**meta_raw)
+    except Exception as e:
+        raise ValueError(f"Failed to load metadata for '{index_name}': {e}")
+
+    # Embed Query
+    port = os.getenv("GATEWAY_V3_PORT", "8101")
+    gateway_url = f"http://localhost:{port}/v1/embed"
+
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(gateway_url, json={"text": query})
+            resp.raise_for_status()
+            embed_res = resp.json()
+            query_vector = np.array([embed_res["embedding"]]).astype("float32")
+    except Exception as e:
+        return {
+            "ok": False,
+            "error": f"Gateway call failed for query: {str(e)}",
+            "hint": "Ensure LLM Gateway is running on port " + port,
+        }
+
+    # Search FAISS
+    try:
+        index = faiss.read_index(str(faiss_path))
+        distances, indices = index.search(query_vector, top_k)
+    except Exception as e:
+        raise RuntimeError(f"FAISS search failed: {e}")
+
+    # Map results
+    results = []
+    for dist, idx in zip(distances[0], indices[0]):
+        if idx < 0 or idx >= len(meta.items):
+            continue
+        results.append(FaissSearchResult(text=meta.items[idx], distance=float(dist)))
+
+    latency = int((time.time() - t0) * 1000)
+
+    response = FaissSearchResponse(
+        query=query, index_name=index_name, results=results, latency_ms=latency
+    )
+
+    return response.model_dump()
+
+
+@mcp.tool()
+def ingest_file(path: str, chunk_size: int = 1000) -> dict:
+    """
+    Extract text from PDF, HTML, Markdown, or TXT files and save as a chunked JSON.
+    Example: ingest_file("data/report.pdf")
+    """
+    p = _safe(path)
+    if not p.exists():
+        raise ValueError(f"File '{path}' does not exist")
+
+    ext = p.suffix.lower()
+    text = ""
+
+    if ext == ".pdf":
+        if pypdf is None:
+            raise RuntimeError("pypdf not installed")
+        with open(p, "rb") as f:
+            reader = pypdf.PdfReader(f)
+            text = "\n".join([page.extract_text() for page in reader.pages])
+    elif ext in (".html", ".htm"):
+        if BeautifulSoup is None:
+            raise RuntimeError("beautifulsoup4 not installed")
+        soup = BeautifulSoup(p.read_text(encoding="utf-8"), "html.parser")
+        # Remove scripts and styles
+        for s in soup(["script", "style"]):
+            s.decompose()
+        text = soup.get_text(separator="\n")
+    elif ext in (".md", ".txt"):
+        text = p.read_text(encoding="utf-8")
+    else:
+        raise ValueError(f"Unsupported file type: {ext}")
+
+    # Basic chunking by character count (trying to split on newlines)
+    chunks = []
+    lines = text.split("\n")
+    current_chunk = ""
+    for line in lines:
+        if len(current_chunk) + len(line) > chunk_size and current_chunk:
+            chunks.append(current_chunk.strip())
+            current_chunk = line
+        else:
+            current_chunk += "\n" + line if current_chunk else line
+    if current_chunk:
+        chunks.append(current_chunk.strip())
+
+    # Save to sandbox/ingested/
+    out_dir = SANDBOX / "ingested"
+    out_dir.mkdir(exist_ok=True)
+    out_path = out_dir / f"{p.stem}.json"
+
+    # We save as a flat list of strings, which create_faiss_index can consume
+    out_path.write_text(json.dumps(chunks, indent=2), encoding="utf-8")
+
+    return {
+        "ok": True,
+        "source": path,
+        "type": ext,
+        "chunks_count": len(chunks),
+        "output_path": str(out_path.relative_to(SANDBOX)),
     }
 
 
