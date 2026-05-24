@@ -62,10 +62,10 @@ class Perception:
                     "2. REVIEW THE MEMORY: If a tool output provides information for a goal, mark it 'is_done': true.\n"
                     "3. TRACK ARTIFACTS: Identify the exact 'artifacts/...' relative path from the Memory for each completed goal and include it in the 'artifact_path' field.\n\n"
                     "KNOWLEDGE & STATE RULES:\n"
-                    "1. TERMINATION: If the information in Memory fully satisfies the USER QUERY, you MUST mark all goals 'is_done': true and do NOT create any new goals. This is the signal that the session is complete.\n"
-                    "2. FINAL ANSWER: When all goals are done, you MUST provide the final, comprehensive answer to the user in the 'context_summary' field.\n"
-                    "3. DURABLE STATE SUMMARY: If goals are still pending, use 'context_summary' to summarize what we currently know about the user/session.\n"
-                    "4. EXTRACTION: Identify new durable FACTS or PREFERENCES and add them to 'new_knowledge'."
+                    "4. TERMINATION: Ensure ONLY if the information in Memory FULLY satisfies the USER QUERY, you mark all goals 'is_done': true and do NOT create any new goals. This is the signal that the session is complete.\n"
+                    "5. FINAL ANSWER: When all goals are done, you MUST provide the final, comprehensive answer to the user in the 'context_summary' field.\n"
+                    "6. DURABLE STATE SUMMARY: If goals are still pending, use 'context_summary' to summarize what we currently know about the user/session.\n"
+                    "7. EXTRACTION: Identify new durable FACTS or PREFERENCES and add them to 'new_knowledge'."
                 ),
                 response_format={
                     "type": "json_schema",
