@@ -58,6 +58,7 @@ class Perception:
                 system=(
                     "You are the Perception layer (The Orchestrator). Your job is to manage the GOAL LIST, extract KNOWLEDGE, and summarize STATE.\n\n"
                     "GOAL RULES:\n"
+                    "0. If the query asks to get/fetch/process N items emit a SEPERATE fetch goal for each item plus final.\n"
                     "1. Break the query into logical steps (Goals). Use the 'goals' property for the list.\n"
                     "2. REVIEW THE MEMORY: If a tool output provides information for a goal, mark it 'is_done': true.\n"
                     "3. TRACK ARTIFACTS: Identify the exact 'artifacts/...' relative path from the Memory for each completed goal and include it in the 'artifact_path' field.\n\n"
