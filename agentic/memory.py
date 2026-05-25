@@ -6,6 +6,7 @@ information without LLM dependency.
 """
 
 import json
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -16,6 +17,7 @@ from agentic.schemas import MemoryArtifact, MemoryItem
 AGENTIC_ROOT = Path(__file__).parent.parent
 ARTIFACTS_DIR = AGENTIC_ROOT / "sandbox" / "artifacts"
 STATE_DIR = ARTIFACTS_DIR / "state"
+FAISS_THRESHOLD_KB = 4  # Default 4KB
 
 # Ensure directories exist
 ARTIFACTS_DIR.mkdir(exist_ok=True, parents=True)
@@ -28,22 +30,25 @@ class ArtifactStorage:
 
     Args:
         storage_dir (Path): The filesystem directory to store artifacts in.
+        threshold_kb (int): Files larger than this will be FAISS-indexed.
     """
 
-    def __init__(self, storage_dir: Path):
+    def __init__(self, storage_dir: Path, threshold_kb: int = FAISS_THRESHOLD_KB):
         self.storage_dir = storage_dir
         self.storage_dir.mkdir(exist_ok=True, parents=True)
+        self.threshold_kb = threshold_kb
 
     def save(self, name: str, data: Any) -> Path:
         """
         Saves raw data wrapped in a metadata envelope as a JSON artifact.
+        If the data exceeds the threshold, it triggers FAISS indexing.
 
         Args:
             name (str): Logical name for the artifact.
             data (Any): The payload to save.
 
         Returns:
-            Path: The path to the created JSON file.
+            Path: The path to the created JSON file or index location info.
         """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         safe_name = "".join([c if c.isalnum() else "_" for c in name])
@@ -53,7 +58,53 @@ class ArtifactStorage:
             "metadata": {"name": name, "timestamp": datetime.now().isoformat()},
             "payload": data,
         }
-        path.write_text(json.dumps(envelope, indent=2), encoding="utf-8")
+        content = json.dumps(envelope, indent=2)
+        size_kb = len(content.encode("utf-8")) / 1024
+
+        if size_kb > self.threshold_kb:
+            # Save the file first so we have a path to index
+            path.write_text(content, encoding="utf-8")
+            # Trigger FAISS indexing (delegated to a helper to avoid circular imports)
+            try:
+                import asyncio
+
+                from mcp_server import create_faiss_index
+
+                # create_faiss_index is async, but memory.py is mostly sync.
+                # We use a background thread or a quick run to handle the index.
+                # For this session, we'll try to run it if possible or log it.
+                rel_path = str(path.relative_to(AGENTIC_ROOT / "sandbox"))
+
+                # Since we are in a sync context, we use a helper to run the async tool
+                def _run_index():
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    try:
+                        res = loop.run_until_complete(
+                            create_faiss_index(rel_path, safe_name)
+                        )
+                        if res.get("ok"):
+                            print(
+                                f" [Memory] FAISS index created: {res.get('index_path')}"
+                            )
+                        else:
+                            print(
+                                f" [Memory] FAISS indexing failed: {res.get('error')}"
+                            )
+                    finally:
+                        loop.close()
+
+                threading.Thread(target=_run_index).start()
+                print(
+                    f" [Memory] Size {size_kb:.1f}KB > {self.threshold_kb}KB. Triggered FAISS indexing for {name}."
+                )
+            except ImportError:
+                print(f" [Warning] mcp_server not found, skipping FAISS indexing.")
+            except Exception as e:
+                print(f" [Warning] FAISS indexing failed: {e}")
+        else:
+            path.write_text(content, encoding="utf-8")
+
         return path
 
     def sync_file(self, filename: str, data: Any) -> Path:
@@ -82,9 +133,9 @@ class Memory:
     Durable knowledge (facts and preferences) is loaded from and synced to disk.
     """
 
-    def __init__(self):
-        self.artifact_store = ArtifactStorage(ARTIFACTS_DIR)
-        self.state_store = ArtifactStorage(STATE_DIR)
+    def __init__(self, threshold_kb: int = FAISS_THRESHOLD_KB):
+        self.artifact_store = ArtifactStorage(ARTIFACTS_DIR, threshold_kb=threshold_kb)
+        self.state_store = ArtifactStorage(STATE_DIR, threshold_kb=threshold_kb)
 
         self.state = MemoryArtifact()
         self._load_durable_state()
