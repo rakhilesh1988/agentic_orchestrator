@@ -371,16 +371,25 @@ async def create_faiss_index(json_path: str, index_name: str = "default") -> dic
     async with httpx.AsyncClient(timeout=60) as client:
         for text in to_embed:
             try:
-                resp = await client.post(gateway_url, json={"text": text})
+                resp = await client.post(
+                    gateway_url, json={"text": text, "model": "nomic-embed-text"}
+                )
                 resp.raise_for_status()
                 res = resp.json()
                 embeddings.append(res["embedding"])
                 dimension = res["dimension"]
             except Exception as e:
+                err_msg = str(e)
+                if hasattr(e, "response") and e.response is not None:
+                    try:
+                        err_msg = f"{e.response.status_code}: {e.response.json().get('detail', e.response.text)}"
+                    except:
+                        err_msg = f"{e.response.status_code}: {e.response.text}"
+
                 return {
                     "ok": False,
-                    "error": f"Gateway call failed for item: {str(e)}",
-                    "hint": "Ensure LLM Gateway is running on port " + port,
+                    "error": f"Gateway call failed for item: {err_msg}",
+                    "hint": "Ensure LLM Gateway is running and Ollama has 'nomic-embed-text' pulled.",
                 }
 
     if not embeddings:
@@ -453,15 +462,24 @@ async def search_faiss_index(
 
     try:
         async with httpx.AsyncClient(timeout=30) as client:
-            resp = await client.post(gateway_url, json={"text": query})
+            resp = await client.post(
+                gateway_url, json={"text": query, "model": "nomic-embed-text"}
+            )
             resp.raise_for_status()
             embed_res = resp.json()
             query_vector = np.array([embed_res["embedding"]]).astype("float32")
     except Exception as e:
+        err_msg = str(e)
+        if hasattr(e, "response") and e.response is not None:
+            try:
+                err_msg = f"{e.response.status_code}: {e.response.json().get('detail', e.response.text)}"
+            except:
+                err_msg = f"{e.response.status_code}: {e.response.text}"
+
         return {
             "ok": False,
-            "error": f"Gateway call failed for query: {str(e)}",
-            "hint": "Ensure LLM Gateway is running on port " + port,
+            "error": f"Gateway call failed for query: {err_msg}",
+            "hint": "Ensure LLM Gateway is running and Ollama has 'nomic-embed-text' pulled.",
         }
 
     # Search FAISS
