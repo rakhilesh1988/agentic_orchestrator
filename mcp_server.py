@@ -352,12 +352,26 @@ async def create_faiss_index(json_path: str, index_name: str = "default") -> dic
     # Decide what to embed.
     to_embed = []
     if isinstance(data, list):
-        to_embed = [
-            json.dumps(item) if isinstance(item, (dict, list)) else str(item)
-            for item in data
-        ]
+        for item in data:
+            text = json.dumps(item) if isinstance(item, (dict, list)) else str(item)
+            if len(text) > 2000:
+                # Chunk large individual items within the list
+                for i in range(0, len(text), 2000):
+                    to_embed.append(text[i : i + 2000].strip())
+            else:
+                to_embed.append(text)
     else:
-        to_embed = [json.dumps(data)]
+        # If it's a single item (dict or string), check if it needs chunking
+        text = json.dumps(data) if isinstance(data, dict) else str(data)
+        if len(text) > 2000:
+            # Use robust character-based chunking
+            chunks = []
+            chunk_size = 2000
+            for i in range(0, len(text), chunk_size):
+                chunks.append(text[i : i + chunk_size].strip())
+            to_embed = chunks
+        else:
+            to_embed = [text]
 
     if not to_embed:
         return {"ok": False, "error": "No content to embed"}
@@ -506,7 +520,7 @@ async def search_faiss_index(
 
 
 @mcp.tool()
-def ingest_file(path: str, chunk_size: int = 1000) -> dict:
+def ingest_file(path: str, chunk_size: int = 2500) -> dict:
     """
     Extract text from PDF, HTML, Markdown, or TXT files and save as a chunked JSON.
     Example: ingest_file("data/report.pdf")
