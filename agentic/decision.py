@@ -49,7 +49,7 @@ class Decision:
         artifacts_info = ""
         if relevant_artifacts:
             artifacts_info = (
-                "Relevant Artifacts (Raw Data Addresses):\n- "
+                "INDEXED & SEARCHABLE ARTIFACTS (Use 'search_faiss_index' for these):\n- "
                 + "\n- ".join(relevant_artifacts)
             )
 
@@ -63,27 +63,46 @@ class Decision:
         )
 
         try:
-            # Using gpt-4.1-mini tier for better tool selection and logic execution.
+            # Using temperature=1.0 for better compatibility with structured output on some providers.
             result = self.llm.chat(
                 prompt=prompt,
                 system=(
                     "You are the Decision layer. Pick the NEXT ACTION for the current goal.\n\n"
                     "RULES:\n"
-                    "1. LOCAL KNOWLEDGE FIRST: If the info could be personal, use 'read_durable_state' first.\n"
-                    "2. ESCALATION: If local check failed, IMMEDIATELY use 'web_search' or 'fetch_url'.\n"
-                    "3. ACT, DON'T CHAT: If you need a tool, you MUST return a 'tool_call'. Do NOT provide a 'final_answer' saying you will use a tool.\n"
-                    "4. FORMAT: You must return valid JSON with either 'tool_call' OR 'final_answer'.\n\n"
+                    "1. VECTOR SEARCH: If you need information from indexed files:\n"
+                    "   - For a SPECIFIC file, use 'search_faiss_index' with its unique Index Name.\n"
+                    "   - For research ACROSS multiple papers or general questions, you MUST use 'search_all_indices' to save iterations. This is much faster than searching one by one.\n"
+                    "2. LOCAL KNOWLEDGE: If the info is personal or about the session, use 'read_durable_state'.\n"
+                    "3. ESCALATION: Use 'web_search' ONLY if the information is not in any indexed artifact or durable state.\n"
+                    "4. ACT, DON'T CHAT: If you need a tool, you MUST return a 'tool_call'. Do NOT provide a 'final_answer' saying you will use a tool.\n"
+                    "5. FORMAT: You must return valid JSON with either 'tool_call' OR 'final_answer'.\n\n"
                     "EXAMPLES:\n"
-                    '- Tool Call: {"tool_call": {"name": "web_search", "arguments": {"query": "Gemini 2.0 news"}}, "thought": "Searching for recent Gemini updates."}\n'
-                    '- Final Answer: {"final_answer": "The flight is at 10 AM.", "thought": "Found the time in memory."}'
+                    '- Tool Call: {"tool_call": {"name": "search_faiss_index", "arguments": {"query": "transformer birth", "index_name": "20260527_102030_raw_output_read_file"}}, "thought": "Searching local index for transformer info."}\n'
+                    '- Final Answer: {"final_answer": "The answer is X.", "thought": "Found the answer in memory."}'
                 ),
                 response_format={
                     "type": "json_schema",
                     "schema": DecisionResult.model_json_schema(),
                 },
                 provider=self.provider,
+                temperature=1.0,
             )
-            decision = DecisionResult.model_validate_json(result["text"])
+
+            if not result or ("text" not in result and "parsed" not in result):
+                raise ValueError("LLM Gateway returned an empty or invalid response")
+
+            if result.get("parsed"):
+                decision = DecisionResult.model_validate(result["parsed"])
+            else:
+                # Robustly extract JSON from markdown blocks if present (client-side fallback)
+                text = result["text"].strip()
+                if text.startswith("```"):
+                    import re
+
+                    match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", text)
+                    if match:
+                        text = match.group(1).strip()
+                decision = DecisionResult.model_validate_json(text)
 
             # Prevent empty decisions
             if not decision.tool_call and not decision.final_answer:
@@ -94,6 +113,7 @@ class Decision:
             return decision
 
         except Exception as e:
+            print(f" [Decision DEBUG] Error: {e}")
             if hasattr(e, "response") and e.response is not None:
                 print(
                     f" [Error] Decision Gateway returned {e.response.status_code}: {e.response.text}"

@@ -6,7 +6,6 @@ information without LLM dependency.
 """
 
 import json
-import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -38,21 +37,25 @@ class ArtifactStorage:
         self.storage_dir.mkdir(exist_ok=True, parents=True)
         self.threshold_kb = threshold_kb
 
-    def save(self, name: str, data: Any) -> Path:
+    async def save(
+        self, name: str, data: Any, skip_indexing: bool = False
+    ) -> tuple[Path, Optional[dict]]:
         """
         Saves raw data wrapped in a metadata envelope as a JSON artifact.
         If the data exceeds the threshold, it triggers FAISS indexing.
 
         Args:
-            name (str): Logical name for the artifact.
-            data (Any): The payload to save.
+            name: Logical name for the artifact.
+            data: The payload to save.
+            skip_indexing: If True, bypass FAISS indexing regardless of size.
 
         Returns:
-            Path: The path to the created JSON file or index location info.
+            tuple[Path, Optional[dict]]: The path to the created JSON file and indexing result if any.
         """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         safe_name = "".join([c if c.isalnum() else "_" for c in name])
         path = self.storage_dir / f"{timestamp}_{safe_name}.json"
+        index_name = f"{timestamp}_{safe_name}"
 
         envelope = {
             "metadata": {"name": name, "timestamp": datetime.now().isoformat()},
@@ -61,43 +64,28 @@ class ArtifactStorage:
         content = json.dumps(envelope, indent=2)
         size_kb = len(content.encode("utf-8")) / 1024
 
-        if size_kb > self.threshold_kb:
-            # Save the file first so we have a path to index
+        index_res = None
+        if size_kb > self.threshold_kb and not skip_indexing:
+            # We calculate size_kb in-memory above before any disk write.
+            # We still save the JSON file as a persistent artifact record.
             path.write_text(content, encoding="utf-8")
+
             # Trigger FAISS indexing (delegated to a helper to avoid circular imports)
             try:
-                import asyncio
-
                 from mcp_server import create_faiss_index
 
-                # create_faiss_index is async, but memory.py is mostly sync.
-                # We use a background thread or a quick run to handle the index.
-                # For this session, we'll try to run it if possible or log it.
                 rel_path = str(path.relative_to(AGENTIC_ROOT / "sandbox"))
-
-                # Since we are in a sync context, we use a helper to run the async tool
-                def _run_index():
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    try:
-                        res = loop.run_until_complete(
-                            create_faiss_index(rel_path, safe_name)
-                        )
-                        if res.get("ok"):
-                            print(
-                                f" [Memory] FAISS index created: {res.get('index_path')}"
-                            )
-                        else:
-                            print(
-                                f" [Memory] FAISS indexing failed: {res.get('error')}"
-                            )
-                    finally:
-                        loop.close()
-
-                threading.Thread(target=_run_index).start()
                 print(
-                    f" [Memory] Size {size_kb:.1f}KB > {self.threshold_kb}KB. Triggered FAISS indexing for {name}."
+                    f" [Memory] Size {size_kb:.1f}KB > {self.threshold_kb}KB. Starting FAISS indexing for {name}..."
                 )
+                # Pass both the path (for metadata) and data (to avoid redundant disk read)
+                index_res = await create_faiss_index(rel_path, index_name, data=data)
+                if index_res.get("ok"):
+                    print(
+                        f" [Memory] FAISS index created: {index_res.get('index_path')}"
+                    )
+                else:
+                    print(f" [Memory] FAISS indexing failed: {index_res.get('error')}")
             except ImportError:
                 print(f" [Warning] mcp_server not found, skipping FAISS indexing.")
             except Exception as e:
@@ -105,20 +93,11 @@ class ArtifactStorage:
         else:
             path.write_text(content, encoding="utf-8")
 
-        return path
+        return path, index_res
 
-    def sync_file(self, filename: str, data: Any) -> Path:
+    async def sync_file(self, filename: str, data: Any) -> Path:
         """
         Overwrites or creates a specific file with JSON data.
-
-        Used for maintaining durable state across sessions.
-
-        Args:
-            filename (str): Name of the file in the storage directory.
-            data (Any): The payload to sync.
-
-        Returns:
-            Path: The path to the synced file.
         """
         path = self.storage_dir / filename
         path.write_text(json.dumps(data, indent=2), encoding="utf-8")
@@ -128,9 +107,6 @@ class ArtifactStorage:
 class Memory:
     """
     Categorized memory system for the agent.
-
-    Stores facts, preferences, tool outcomes, and scratchpad entries.
-    Durable knowledge (facts and preferences) is loaded from and synced to disk.
     """
 
     def __init__(self, threshold_kb: int = FAISS_THRESHOLD_KB):
@@ -138,7 +114,9 @@ class Memory:
         self.state_store = ArtifactStorage(STATE_DIR, threshold_kb=threshold_kb)
 
         self.state = MemoryArtifact()
+        self.index_registry: Dict[str, str] = {}
         self._load_durable_state()
+        self._load_index_registry()
 
     def _load_durable_state(self):
         """Loads facts and preferences from the state storage into memory."""
@@ -154,21 +132,45 @@ class Memory:
             except Exception as e:
                 print(f" [Warning] Could not load durable state: {e}")
 
+    def _load_index_registry(self):
+        """Loads the registry of previously indexed files."""
+        registry_path = STATE_DIR / "index_registry.json"
+        if registry_path.exists():
+            try:
+                self.index_registry = json.loads(
+                    registry_path.read_text(encoding="utf-8")
+                )
+            except Exception as e:
+                print(f" [Warning] Could not load index registry: {e}")
+
+    async def register_index(self, source_path: str, index_name: str):
+        """
+        Maps a source file path to its FAISS index name and persists it.
+        """
+        self.index_registry[source_path] = index_name
+        await self.state_store.sync_file("index_registry.json", self.index_registry)
+        print(f" [Memory] Registered index for {source_path}: {index_name}")
+
     def read(self, filter_kinds: Optional[List[str]] = None) -> str:
         """
         Returns a formatted string of categorized memory items.
-
-        Args:
-            filter_kinds (Optional[List[str]]): Specific kinds of memory to return.
-                Defaults to all kinds.
-
-        Returns:
-            str: A formatted block of text suitable for an LLM prompt.
         """
-        if not self.state.items:
-            return "No prior history."
-
         output = []
+
+        # Include Indexed Artifacts Registry first so Decision layer sees it immediately
+        if self.index_registry:
+            output.append(
+                "--- PREVIOUSLY INDEXED FILES (Searchable via search_faiss_index) ---"
+            )
+            for source, idx in self.index_registry.items():
+                output.append(f"- {source} -> Index Name: {idx}")
+            output.append("")
+
+        if not self.state.items:
+            if not output:
+                return "No prior history."
+            return "\n".join(output)
+
         kinds = filter_kinds or ["fact", "preference", "tool_outcome", "scratchpad"]
 
         for kind in kinds:
@@ -181,20 +183,19 @@ class Memory:
 
         return "\n".join(output)
 
-    def record_item(self, content: str, kind: str):
+    async def record_item(self, content: str, kind: str):
         """
         Records a single item in memory and syncs durable items to disk.
-
-        Args:
-            content (str): The information to record.
-            kind (str): The category of the item (e.g., 'fact', 'tool_outcome').
         """
         item = MemoryItem(kind=kind, content=content)
         self.state.items.append(item)
         self.state.last_updated = datetime.now().isoformat()
 
         # 1. Save standard session snapshot to artifacts
-        self.artifact_store.save("memory_state", self.state.model_dump())
+        # We pass a high threshold or skip indexing for internal state to avoid noise
+        await self.artifact_store.save(
+            "memory_state", self.state.model_dump(), skip_indexing=True
+        )
 
         # 2. If it's a DURABLE KIND (fact or preference), sync to the /state/ folder
         if kind in ["fact", "preference"]:
@@ -203,15 +204,12 @@ class Memory:
                 for it in self.state.items
                 if it.kind in ["fact", "preference"]
             ]
-            self.state_store.sync_file("durable_state.json", durable_items)
+            await self.state_store.sync_file("durable_state.json", durable_items)
             # Also save a timestamped version for history
-            self.state_store.save(f"durable_{kind}", item.model_dump())
+            await self.state_store.save(f"durable_{kind}", item.model_dump())
 
-    def record_outcome(self, outcome_summary: str):
+    async def record_outcome(self, outcome_summary: str):
         """
         Convenience method to record a tool execution outcome.
-
-        Args:
-            outcome_summary (str): The summary of what happened.
         """
-        self.record_item(outcome_summary, "tool_outcome")
+        await self.record_item(outcome_summary, "tool_outcome")

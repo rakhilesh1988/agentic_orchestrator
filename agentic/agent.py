@@ -39,7 +39,7 @@ class Agent:
         self.memory = Memory()
         self.perception = Perception(self.llm, provider=perception_provider)
         self.decision = Decision(self.llm, provider=decision_provider)
-        self.action = Action(self.memory.artifact_store)
+        self.action = Action(self.memory)
 
     def _get_tools(self) -> List[Dict]:
         """
@@ -90,7 +90,7 @@ class Agent:
             # RECORD NEW KNOWLEDGE (Facts/Preferences)
             for item in perception.new_knowledge:
                 print(f" [Perception] Discovered {item.kind}: {item.content}")
-                self.memory.record_item(item.content, item.kind)
+                await self.memory.record_item(item.content, item.kind)
 
             # Check if all goals are done
             unfinished = [g for g in perception.goals if not g.is_done]
@@ -117,7 +117,7 @@ class Agent:
             if decision.final_answer:
                 print(f" [Decision] Goal satisfying answer generated.")
                 # Record the answer as a tool outcome so Perception sees it next turn
-                self.memory.record_item(
+                await self.memory.record_item(
                     f"Goal '{current_goal.description}' resolved: {decision.final_answer}",
                     "tool_outcome",
                 )
@@ -131,14 +131,14 @@ class Agent:
 
                 # 5. Record outcome back to Memory
                 print(f" [Action] Result: {action_res.status}")
-                self.memory.record_item(action_res.output_summary, "tool_outcome")
+                await self.memory.record_item(action_res.output_summary, "tool_outcome")
                 run_history.append(
                     f"Turn {i + 1} Action: {tool_call.name} -> {action_res.status}"
                 )
             else:
                 # Fallback
                 print(" [Decision] No action provided. Recording status to memory.")
-                self.memory.record_item(
+                await self.memory.record_item(
                     f"Decision for goal '{current_goal.description}' provided no action or answer.",
                     "scratchpad",
                 )

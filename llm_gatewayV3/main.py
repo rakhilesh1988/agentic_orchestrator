@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -342,10 +343,18 @@ def _required_caps(req: ChatRequest):
 
 
 def _validate_structured(text: str, schema: dict):
+    # Robustly extract JSON from markdown blocks if present
+    text = text.strip()
+    if text.startswith("```"):
+        # Match ```json ... ``` or just ``` ... ```
+        match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", text)
+        if match:
+            text = match.group(1).strip()
+
     try:
         obj = json.loads(text)
     except Exception as e:
-        raise ValueError(f"output is not JSON: {e}")
+        raise ValueError(f"output is not JSON: {e}. Raw text: {text[:100]}...")
     Draft202012Validator(schema).validate(obj)
     return obj
 

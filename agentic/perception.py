@@ -58,23 +58,47 @@ class Perception:
                 system=(
                     "You are the Perception layer (The Orchestrator). Your job is to manage the GOAL LIST, extract KNOWLEDGE, and summarize STATE.\n\n"
                     "GOAL RULES:\n"
-                    "0. If the query asks to get/fetch/process N items emit a SEPERATE fetch goal for each item plus final.\n"
-                    "1. Break the query into logical steps (Goals). Use the 'goals' property for the list.\n"
-                    "2. REVIEW THE MEMORY: If a tool output provides information for a goal, mark it 'is_done': true.\n"
-                    "3. TRACK ARTIFACTS: Identify the exact 'artifacts/...' relative path from the Memory for each completed goal and include it in the 'artifact_path' field.\n\n"
+                    "1. BREAKDOWN: Break the query into logical steps. If it has multiple parts (e.g., 'Do X then Y'), emit separate goals.\n"
+                    "2. NO SKIPPING: Do NOT mark a goal as 'is_done' unless you see the SPECIFIC tool output in the Memory. Do NOT assume a future action will be done.\n"
+                    "3. PERSISTENCE: Maintain the same goal list across turns. Update 'is_done' status based on tool outcomes in Memory.\n"
+                    "VERIFICATION: \n"
+                    "   - INDEX goals: Must see 'FAISS index created' in Memory OR the file must be listed in 'PREVIOUSLY INDEXED FILES'.\n"
+                    "   - READ/FETCH goals: Must see the content snippet in Memory.\n"
+                    "   - RESEARCH goals: Use 'search_all_indices' for broad or 'across papers' questions to save turns.\n"
+                    "5. TRACK ARTIFACTS: \n"
+                    "   - In the 'goals' list, include the 'artifact_path' for completed goals.\n"
+                    "   - In the 'relevant_artifacts' list, include ONLY the paths of artifacts that have been successfully INDEXED (i.e., you see 'FAISS index created' in Memory OR it is in 'PREVIOUSLY INDEXED FILES'). Use the 'Index Name' from the registry for previously indexed files.\n\n"
                     "KNOWLEDGE & STATE RULES:\n"
-                    "4. TERMINATION: Ensure ONLY if the information in Memory FULLY satisfies the USER QUERY, you mark all goals 'is_done': true and do NOT create any new goals. This is the signal that the session is complete.\n"
-                    "5. FINAL ANSWER: When all goals are done, you MUST provide the final, comprehensive answer to the user in the 'context_summary' field.\n"
-                    "6. DURABLE STATE SUMMARY: If goals are still pending, use 'context_summary' to summarize what we currently know about the user/session.\n"
-                    "7. EXTRACTION: Identify new durable FACTS or PREFERENCES and add them to 'new_knowledge'."
+                    "6. TERMINATION: ONLY mark all goals 'is_done': true when the USER QUERY is fully satisfied by the Memory.\n"
+                    "7. FINAL ANSWER: Provide the comprehensive answer in 'context_summary' ONLY when all goals are done.\n"
+                    "8. STATE SUMMARY: If goals are pending, use 'context_summary' to summarize progress.\n"
+                    "9. EXTRACTION: Identify new durable FACTS or PREFERENCES and add to 'new_knowledge'.\n\n"
+                    "EXAMPLES:\n"
+                    '- First turn: {"goals": [{"description": "Index A", "is_done": false}, {"description": "Summarize", "is_done": false}], "context_summary": "Starting task."}\n'
+                    '- Progress: {"goals": [{"description": "Index A", "is_done": true, "artifact_path": "artifacts/A.json"}, {"description": "Summarize", "is_done": false}], "context_summary": "A is indexed."}\n'
+                    '- Final: {"goals": [{"description": "Index A", "is_done": true}, {"description": "Summarize", "is_done": true}], "context_summary": "The final answer is..."}'
                 ),
                 response_format={
                     "type": "json_schema",
                     "schema": PerceptionResult.model_json_schema(),
                 },
                 provider=self.provider,
+                temperature=1.0,
             )
-            return PerceptionResult.model_validate_json(result["text"])
+
+            if result.get("parsed"):
+                return PerceptionResult.model_validate(result["parsed"])
+
+            # Robustly extract JSON from markdown blocks if present
+            text = result["text"].strip()
+            if text.startswith("```"):
+                import re
+
+                match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", text)
+                if match:
+                    text = match.group(1).strip()
+
+            return PerceptionResult.model_validate_json(text)
         except Exception as e:
             if hasattr(e, "response") and e.response is not None:
                 print(

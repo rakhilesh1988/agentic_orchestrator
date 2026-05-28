@@ -21,6 +21,7 @@ import threading
 import time
 from datetime import datetime
 from pathlib import Path
+from typing import Any, List, Optional
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -331,49 +332,65 @@ def edit_file(path: str, find: str, replace: str, replace_all: bool = False) -> 
 
 
 @mcp.tool()
-async def create_faiss_index(json_path: str, index_name: str = "default") -> dict:
+async def create_faiss_index(
+    json_path: Optional[str] = None, index_name: str = "default", data: Any = None
+) -> dict:
     """
-    Read a JSON file from the sandbox, embed its contents via the LLM Gateway,
-    and save a FAISS index plus metadata to disk.
-    Example: create_faiss_index("artifacts/state/durable_state.json", "durable_state")
+    Embed content via the LLM Gateway and save a FAISS index plus metadata.
+    Accepts either a 'json_path' to read from the sandbox or raw 'data' directly.
     """
     if faiss is None or np is None:
         raise RuntimeError("faiss or numpy not installed on server")
 
-    p = _safe(json_path)
-    if not p.exists():
-        raise ValueError(f"File '{json_path}' does not exist")
+    if data is None:
+        if json_path is None:
+            raise ValueError("Either 'json_path' or 'data' must be provided")
+        p = _safe(json_path)
+        if not p.exists():
+            raise ValueError(f"File '{json_path}' does not exist")
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+        except Exception as e:
+            raise ValueError(f"Failed to parse JSON from '{json_path}': {e}")
 
-    try:
-        data = json.loads(p.read_text(encoding="utf-8"))
-    except Exception as e:
-        raise ValueError(f"Failed to parse JSON from '{json_path}': {e}")
+    # 1. UNWRAP ENVELOPE (if present)
+    # Memory.py wraps everything in {"metadata": ..., "payload": ...}
+    if isinstance(data, dict) and "payload" in data and "metadata" in data:
+        data = data["payload"]
 
-    # Decide what to embed.
+    # 2. DECIDE WHAT TO EMBED
     to_embed = []
-    if isinstance(data, list):
-        for item in data:
-            text = json.dumps(item) if isinstance(item, (dict, list)) else str(item)
-            if len(text) > 2000:
-                # Chunk large individual items within the list
-                for i in range(0, len(text), 2000):
-                    to_embed.append(text[i : i + 2000].strip())
-            else:
-                to_embed.append(text)
-    else:
-        # If it's a single item (dict or string), check if it needs chunking
-        text = json.dumps(data) if isinstance(data, dict) else str(data)
-        if len(text) > 2000:
-            # Use robust character-based chunking
-            chunks = []
-            chunk_size = 2000
-            for i in range(0, len(text), chunk_size):
-                chunks.append(text[i : i + chunk_size].strip())
-            to_embed = chunks
-        else:
-            to_embed = [text]
 
-    if not to_embed:
+    def _extract_text(obj):
+        """Recursively extract or stringify items for embedding."""
+        if isinstance(obj, list):
+            for item in obj:
+                _extract_text(item)
+        elif isinstance(obj, dict):
+            # Check for common "bulk" keys
+            for key in ["chunks", "items", "results", "content"]:
+                if key in obj and isinstance(obj[key], (list, str)):
+                    _extract_text(obj[key])
+                    return
+            # Otherwise just stringify the whole dict
+            to_embed.append(json.dumps(obj))
+        else:
+            to_embed.append(str(obj))
+
+    _extract_text(data)
+
+    # 3. CHUNK IF NECESSARY
+    final_to_embed = []
+    for text in to_embed:
+        if len(text) > 2000:
+            for i in range(0, len(text), 2000):
+                chunk = text[i : i + 2000].strip()
+                if chunk:
+                    final_to_embed.append(chunk)
+        elif text.strip():
+            final_to_embed.append(text.strip())
+
+    if not final_to_embed:
         return {"ok": False, "error": "No content to embed"}
 
     embeddings = []
@@ -383,7 +400,7 @@ async def create_faiss_index(json_path: str, index_name: str = "default") -> dic
     gateway_url = f"http://localhost:{port}/v1/embed"
 
     async with httpx.AsyncClient(timeout=60) as client:
-        for text in to_embed:
+        for text in final_to_embed:
             try:
                 resp = await client.post(
                     gateway_url, json={"text": text, "model": "nomic-embed-text"}
@@ -427,9 +444,9 @@ async def create_faiss_index(json_path: str, index_name: str = "default") -> dic
     meta = FaissIndexMeta(
         index_name=index_name,
         dimension=dimension,
-        count=len(to_embed),
-        source_file=json_path,
-        items=to_embed,
+        count=len(final_to_embed),
+        source_file=json_path or "direct_data",
+        items=final_to_embed,
         created_at=datetime.now().isoformat(),
     )
     meta_path.write_text(json.dumps(meta.model_dump(), indent=2), encoding="utf-8")
@@ -439,8 +456,22 @@ async def create_faiss_index(json_path: str, index_name: str = "default") -> dic
         "index_path": str(faiss_path.relative_to(SANDBOX)),
         "meta_path": str(meta_path.relative_to(SANDBOX)),
         "dimension": dimension,
-        "count": len(to_embed),
+        "count": len(final_to_embed),
     }
+
+
+async def _embed_text(text: str) -> np.ndarray:
+    """Helper to get embedding vector for a string."""
+    port = os.getenv("GATEWAY_V3_PORT", "8101")
+    gateway_url = f"http://localhost:{port}/v1/embed"
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.post(
+            gateway_url, json={"text": text, "model": "nomic-embed-text"}
+        )
+        resp.raise_for_status()
+        embed_res = resp.json()
+        return np.array([embed_res["embedding"]]).astype("float32")
 
 
 @mcp.tool()
@@ -453,6 +484,9 @@ async def search_faiss_index(
     """
     if faiss is None or np is None:
         raise RuntimeError("faiss or numpy not installed on server")
+
+    # Clean up index_name if the LLM passed a path or filename with suffix
+    index_name = Path(index_name).stem
 
     index_dir = SANDBOX / "indices"
     faiss_path = index_dir / f"{index_name}.faiss"
@@ -471,17 +505,8 @@ async def search_faiss_index(
         raise ValueError(f"Failed to load metadata for '{index_name}': {e}")
 
     # Embed Query
-    port = os.getenv("GATEWAY_V3_PORT", "8101")
-    gateway_url = f"http://localhost:{port}/v1/embed"
-
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
-            resp = await client.post(
-                gateway_url, json={"text": query, "model": "nomic-embed-text"}
-            )
-            resp.raise_for_status()
-            embed_res = resp.json()
-            query_vector = np.array([embed_res["embedding"]]).astype("float32")
+        query_vector = await _embed_text(query)
     except Exception as e:
         err_msg = str(e)
         if hasattr(e, "response") and e.response is not None:
@@ -520,9 +545,72 @@ async def search_faiss_index(
 
 
 @mcp.tool()
+async def search_all_indices(query: str, top_k: int = 2) -> dict:
+    """
+    Search across ALL available FAISS indices in the sandbox/indices folder.
+    Useful for cross-paper research or when the specific index name is unknown.
+    Example: search_all_indices("How do these papers handle credit assignment?")
+    """
+    if faiss is None or np is None:
+        raise RuntimeError("faiss or numpy not installed on server")
+
+    index_dir = SANDBOX / "indices"
+    faiss_files = list(index_dir.glob("*.faiss"))
+    if not faiss_files:
+        return {"ok": False, "error": "No indices found in sandbox/indices"}
+
+    t0 = time.time()
+
+    # 1. Embed Query Once
+    try:
+        query_vector = await _embed_text(query)
+    except Exception as e:
+        return {"ok": False, "error": f"Gateway call failed: {e}"}
+
+    # 2. Search each index
+    all_results = []
+    for f_path in faiss_files:
+        idx_name = f_path.stem
+        m_path = f_path.with_suffix(".json")
+        if not m_path.exists():
+            continue
+
+        try:
+            # Load metadata
+            meta = FaissIndexMeta(**json.loads(m_path.read_text(encoding="utf-8")))
+            # Search FAISS
+            index = faiss.read_index(str(f_path))
+            distances, indices = index.search(query_vector, top_k)
+
+            for dist, idx in zip(distances[0], indices[0]):
+                if idx < 0 or idx >= len(meta.items):
+                    continue
+                all_results.append(
+                    {
+                        "index_name": idx_name,
+                        "text": meta.items[idx],
+                        "distance": float(dist),
+                    }
+                )
+        except Exception as e:
+            print(f" [Warning] Failed to search index {idx_name}: {e}")
+
+    # 3. Sort by distance (best first)
+    all_results.sort(key=lambda x: x["distance"])
+
+    latency = int((time.time() - t0) * 1000)
+    return {
+        "query": query,
+        "results": all_results[:10],  # Cap at 10 overall best results
+        "latency_ms": latency,
+        "indices_searched": len(faiss_files),
+    }
+
+
+@mcp.tool()
 def ingest_file(path: str, chunk_size: int = 2500) -> dict:
     """
-    Extract text from PDF, HTML, Markdown, or TXT files and save as a chunked JSON.
+    Extract text from PDF, HTML, Markdown, or TXT files and return chunks for the Memory agent to store.
     Example: ingest_file("data/report.pdf")
     """
     p = _safe(path)
@@ -564,20 +652,12 @@ def ingest_file(path: str, chunk_size: int = 2500) -> dict:
     if current_chunk:
         chunks.append(current_chunk.strip())
 
-    # Save to sandbox/ingested/
-    out_dir = SANDBOX / "ingested"
-    out_dir.mkdir(exist_ok=True)
-    out_path = out_dir / f"{p.stem}.json"
-
-    # We save as a flat list of strings, which create_faiss_index can consume
-    out_path.write_text(json.dumps(chunks, indent=2), encoding="utf-8")
-
     return {
-        "ok": True,
+        "status": "success",
         "source": path,
         "type": ext,
         "chunks_count": len(chunks),
-        "output_path": str(out_path.relative_to(SANDBOX)),
+        "chunks": chunks,
     }
 
 

@@ -6,9 +6,12 @@ Decision layer and the physical tool environment.
 """
 
 import asyncio
-from typing import Any, Dict, Optional
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
-from agentic.memory import ArtifactStorage
+if TYPE_CHECKING:
+    from agentic.memory import Memory
+
 from agentic.schemas import ActionResponse, ToolCall
 
 
@@ -20,8 +23,9 @@ class Action:
     using ArtifactStorage.
     """
 
-    def __init__(self, storage: ArtifactStorage):
-        self.storage = storage
+    def __init__(self, memory: "Memory"):
+        self.memory = memory
+        self.storage = memory.artifact_store
 
     async def execute(self, tool_call: ToolCall) -> ActionResponse:
         """
@@ -56,7 +60,17 @@ class Action:
                 raw_res = await raw_res
 
             # Save raw output to artifact store
-            path = self.storage.save(f"raw_output_{tool_call.name}", raw_res)
+            # Skip indexing for tools that don't produce primary knowledge or are recursive (like search)
+            skip_indexing = tool_call.name in [
+                "search_faiss_index",
+                "list_dir",
+                "get_time",
+                "read_durable_state",
+                "currency_convert",
+            ]
+            path, index_res = await self.storage.save(
+                f"raw_output_{tool_call.name}", raw_res, skip_indexing=skip_indexing
+            )
 
             # Create short descriptor for memory
             # Use sandbox-relative path for tool outcomes so read_file works correctly
@@ -68,9 +82,27 @@ class Action:
                     f"\nContent Snippet (first 1000 chars): {raw_str[:1000]}..."
                 )
 
+            indexing_info = ""
+            if index_res:
+                if index_res.get("ok"):
+                    index_name = Path(index_res.get("index_path")).stem
+                    indexing_info = (
+                        f" FAISS index created at {index_res.get('index_path')}."
+                    )
+                    # Register the index in the persistent registry
+                    # Try to find the original source path
+                    source = tool_call.arguments.get("path")
+                    if not source and isinstance(raw_res, dict):
+                        source = raw_res.get("source")
+
+                    if source:
+                        await self.memory.register_index(str(source), index_name)
+                else:
+                    indexing_info = f" FAISS indexing failed: {index_res.get('error')}."
+
             summary = (
                 f"Executed {tool_call.name}. Result length: {len(str(raw_res))} chars. "
-                f"Full result stored in {rel_path}.{content_snippet}"
+                f"Full result stored in {rel_path}.{indexing_info}{content_snippet}"
             )
 
             return ActionResponse(
