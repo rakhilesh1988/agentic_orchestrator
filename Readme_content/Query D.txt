@@ -1,0 +1,76 @@
+ [System] Starting LLM Gateway V3 from /Users/balanarayanil/Documents/EAGv3/Session 6/llm_gatewayV3...
+ [System] Waiting for Gateway to initialize.... [Ready]
+
+============================================================
+  EAGv3 AGENTIC ORCHESTRATOR ACTIVE
+  Perception: openai | Decision: openai
+============================================================
+
+[AGENT START] Search for Python asyncio best practices, read the top 3 results, and give me a short numbered list of the advice they agree on.
+==================================================
+
+--- Iteration 1 ---
+ [Perception] Current Goal: Search for Python asyncio best practices
+[05/28/26 18:09:42] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                                               _client.py:1025
+ [Decision] Thought: Performing web search for top 3 results on Python asyncio best practices to gather common advice.
+  >> Executing [web_search]...
+ [Memory] Size 6.9KB > 4KB. Starting FAISS indexing for raw_output_web_search...
+[05/28/26 18:09:46] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+ [Memory] FAISS index created: indices/20260528_180945_raw_output_web_search.faiss
+ [Action] Result: success
+
+--- Iteration 2 ---
+[05/28/26 18:09:53] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                                               _client.py:1025
+ [Perception] Current Goal: Extract common asyncio best practices advice from the top 3 results
+[05/28/26 18:09:55] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                                               _client.py:1025
+ [Decision] Thought: Searching the indexed web search results for common asyncio best practices advice from the top 3 results.
+  >> Executing [search_faiss_index]...
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+ [Action] Result: success
+
+--- Iteration 3 ---
+[05/28/26 18:10:02] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                                               _client.py:1025
+ [Perception] Current Goal: Extract and summarize common advice from these top 3 asyncio best practices results
+[05/28/26 18:10:04] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                                               _client.py:1025
+ [Decision] Thought: Retrieving top 3 results to identify common asyncio best practices advice they agree on.
+  >> Executing [search_faiss_index]...
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+ [Action] Result: success
+
+--- Iteration 4 ---
+[05/28/26 18:10:11] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                                               _client.py:1025
+ [Perception] Current Goal: Summarize the common asyncio best practices advice into a short numbered list
+[05/28/26 18:10:15] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                                               _client.py:1025
+ [Decision] Thought: Summarizing the common asyncio best practices from the top 3 search results already retrieved and read.
+ [Decision] Goal satisfying answer generated.
+
+--- Iteration 5 ---
+[05/28/26 18:10:26] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 503 Service Unavailable"                              _client.py:1025
+ [Error] Perception Gateway returned 503: {"detail":"structured output failed validation: ['artifacts/20260528_180955_raw_output_search_faiss_index.json', 'artifacts/20260528_181004_raw_output_search_faiss_index.json'] is not valid under any of the given schemas\n\nFailed validating 'anyOf' in schema['properties']['goal_list']['items']['properties']['artifact_path']:\n    {'anyOf': [{'type': 'string'}, {'type': 'null'}],\n     'default': None,\n     'description': 'Path to the raw data file if this goal involved a '\n                    'tool',\n     'title': 'Artifact Path'}\n\nOn instance['goal_list'][1]['artifact_path']:\n    ['artifacts/20260528_180955_raw_output_search_faiss_index.json',\n     'artifacts/20260528_181004_raw_output_search_faiss_index.json']"}
+ [Perception] Current Goal: Search for Python asyncio best practices, read the top 3 results, and give me a short numbered list of the advice they agree on.
+[05/28/26 18:10:29] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                                               _client.py:1025
+ [Decision] Thought: Summarized the common advice from the top 3 search results about Python asyncio best practices as a short numbered list.
+ [Decision] Goal satisfying answer generated.
+
+--- Iteration 6 ---
+[05/28/26 18:10:39] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                                               _client.py:1025
+ [Perception] All goals satisfied.
+
+============================================================
+  FINAL AGENT RESPONSE
+============================================================
+The search for Python asyncio best practices has been completed successfully with the top 3 results read and analyzed. The common advice they agree on has been summarized into a short numbered list:
+1. Use async/await properly, understanding that async functions are not inherently concurrent and coroutines generally run in code order.
+2. Leverage asyncio tasks to schedule and manage concurrent execution explicitly.
+3. Avoid blocking calls inside async functions to maintain event loop responsiveness.
+4. Use asyncio's built-in synchronization primitives (locks, events) as needed.
+5. Properly handle exceptions within async code.
+6. Prefer higher-level asyncio APIs and libraries over manual event loop management.
+7. Regularly test and profile async code for performance and concurrency issues.
+
+ [System] Terminating background Gateway...

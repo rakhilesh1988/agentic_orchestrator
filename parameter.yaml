@@ -10,7 +10,7 @@
 # query: "When is mom's birthday?"
 
 # D
-# query: "Search for "Python asyncio best practices", read the top 3 results, and give me a short numbered list of the advice they agree on."
+# query: "Search for Python asyncio best practices, read the top 3 results, and give me a short numbered list of the advice they agree on."
 
 # E
 # query: "Index the file papers/attention.md and tell me what the three key contributions of the Transformer architecture are according to this paper."

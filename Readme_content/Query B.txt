@@ -1,0 +1,68 @@
+ [System] Starting LLM Gateway V3 from /Users/balanarayanil/Documents/EAGv3/Session 6/llm_gatewayV3...
+ [System] Waiting for Gateway to initialize.... [Ready]
+
+============================================================
+  EAGv3 AGENTIC ORCHESTRATOR ACTIVE
+  Perception: openai | Decision: ollama
+============================================================
+
+[AGENT START] Find 3 family-friendly things to do in Tokyo this weekend. Check Saturday's weather forecast there and tell me which one is most appropriate.
+==================================================
+
+--- Iteration 1 ---
+ [Perception] Current Goal: Research 3 family-friendly things to do in Tokyo this weekend
+[05/28/26 17:35:37] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                      _client.py:1025
+ [Decision] Thought:
+  >> Executing [web_search]...
+ [Memory] Size 9.6KB > 4KB. Starting FAISS indexing for raw_output_web_search...
+[05/28/26 17:35:38] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:35:39] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+ [Memory] FAISS index created: indices/20260528_173538_raw_output_web_search.faiss
+ [Action] Result: success
+
+--- Iteration 2 ---
+[05/28/26 17:35:52] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                      _client.py:1025
+ [Perception] Current Goal: Check Saturday's weather forecast in Tokyo
+[05/28/26 17:36:15] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                      _client.py:1025
+ [Decision] Thought:
+  >> Executing [web_search]...
+ [Memory] Size 10.7KB > 4KB. Starting FAISS indexing for raw_output_web_search...
+[05/28/26 17:36:22] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+ [Memory] FAISS index created: indices/20260528_173621_raw_output_web_search.faiss
+ [Action] Result: success
+
+--- Iteration 3 ---
+[05/28/26 17:36:32] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                      _client.py:1025
+ [Perception] Current Goal: Recommend the most appropriate family-friendly activity given Saturday's weather
+[05/28/26 17:37:42] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                      _client.py:1025
+ [Decision] Thought:
+ [Decision] Goal satisfying answer generated.
+
+--- Iteration 4 ---
+[05/28/26 17:37:56] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                      _client.py:1025
+ [Perception] All goals satisfied.
+
+============================================================
+  FINAL AGENT RESPONSE
+============================================================
+The user asked for 3 family-friendly things to do in Tokyo this weekend and the Saturday weather forecast to select the most appropriate activity. The three recommended activities are:
+1. Harajuku: shopping and cultural experience on Takeshita Street with options to be indoors or shaded, suitable for warm weather around 27°C.
+2. Senso-ji Temple: requires significant outdoor walking, better during cooler parts of the day.
+3. Yoyogi Park: outdoor play and picnics but higher risk of overheating for children in warm and potentially humid conditions.
+Given the forecast of up to 27°C on Saturday, the Harajuku outing is the most appropriate for a family-friendly activity due to its flexible mix of indoor and outdoor options, making it manageable despite the warm weather.
+
+ [System] Terminating background Gateway...

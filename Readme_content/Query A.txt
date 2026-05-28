@@ -1,0 +1,185 @@
+ [System] Starting LLM Gateway V3 from /Users/balanarayanil/Documents/EAGv3/Session 6/llm_gatewayV3...
+ [System] Waiting for Gateway to initialize.... [Ready]
+
+============================================================
+  EAGv3 AGENTIC ORCHESTRATOR ACTIVE
+  Perception: openai | Decision: openai
+============================================================
+
+[AGENT START] Fetch https://en.wikipedia.org/wiki/Claude_Shannon and tell me his birth date, death date, and three key contributions to information theory.
+==================================================
+
+--- Iteration 1 ---
+ [Perception] Current Goal: Fetch content of https://en.wikipedia.org/wiki/Claude_Shannon
+[05/28/26 17:20:24] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                      _client.py:1025
+ [Decision] Thought: Fetching the Wikipedia page content for Claude Shannon to extract his birth date, death date, and key contributions to information theory.
+  >> Executing [fetch_url]...
+[INIT].... → Crawl4AI 0.8.6
+[FETCH]... ↓ https://en.wikipedia.org/wiki/Claude_Shannon                                                         | ✓ | ⏱: 1.73s
+[SCRAPE].. ◆ https://en.wikipedia.org/wiki/Claude_Shannon                                                         | ✓ | ⏱: 0.21s
+[COMPLETE] ● https://en.wikipedia.org/wiki/Claude_Shannon                                                         | ✓ | ⏱: 1.95s
+ [Memory] Size 259.3KB > 4KB. Starting FAISS indexing for raw_output_fetch_url...
+[05/28/26 17:20:30] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:31] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:32] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:33] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:34] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:35] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:36] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:37] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:38] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:39] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:40] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:41] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:42] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:43] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:44] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:45] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:46] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:47] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:48] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:49] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:50] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:51] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:52] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:53] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+[05/28/26 17:20:54] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+ [Memory] FAISS index created: indices/20260528_172030_raw_output_fetch_url.faiss
+ [Action] Result: success
+
+--- Iteration 2 ---
+[05/28/26 17:21:02] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                      _client.py:1025
+ [Perception] Current Goal: Extract Claude Shannon's birth date from fetched content
+[05/28/26 17:21:04] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                      _client.py:1025
+ [Decision] Thought: Searching the fetched Wikipedia page content for Claude Shannon's birth date.
+  >> Executing [search_faiss_index]...
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+ [Action] Result: success
+
+--- Iteration 3 ---
+[05/28/26 17:21:13] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                      _client.py:1025
+ [Perception] Current Goal: Extract three key contributions to information theory
+[05/28/26 17:21:14] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                      _client.py:1025
+ [Decision] Thought: Searching the indexed Wikipedia content for Claude Shannon's three key contributions to information theory.
+  >> Executing [search_faiss_index]...
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                     _client.py:1740
+ [Action] Result: success
+
+--- Iteration 4 ---
+[05/28/26 17:21:26] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                      _client.py:1025
+ [Perception] All goals satisfied.
+
+============================================================
+  FINAL AGENT RESPONSE
+============================================================
+Claude Shannon was born on April 30, 1916, and died on February 24, 2001. He is known as the father of information theory and made several key contributions including: 1) Developing information entropy as a measure of information content and uncertainty reduction in messages; 2) Publishing the foundational 1948 paper "A Mathematical Theory of Communication" which laid the groundwork of modern information theory; 3) Being the first to describe the use of binary digits (bits) for data representation and communication, forming the basis of digital circuits and computing.
+
+ [System] Terminating background Gateway...

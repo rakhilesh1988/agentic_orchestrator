@@ -1,0 +1,20 @@
+ [System] Starting LLM Gateway V3 from /Users/balanarayanil/Documents/EAGv3/Session 6/llm_gatewayV3...
+ [System] Waiting for Gateway to initialize.... [Ready]
+
+============================================================
+  EAGv3 AGENTIC ORCHESTRATOR ACTIVE
+  Perception: openai | Decision: openai
+============================================================
+
+[AGENT START] When is mom's birthday?
+==================================================
+
+--- Iteration 1 ---
+ [Perception] All goals satisfied.
+
+============================================================
+  FINAL AGENT RESPONSE
+============================================================
+Mom's birthday is on 15 May 2026.
+
+ [System] Terminating background Gateway...
