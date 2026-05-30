@@ -1,0 +1,97 @@
+ [System] Gateway already detected at http://localhost:8101.
+
+============================================================
+  EAGv3 AGENTIC ORCHESTRATOR ACTIVE
+  Perception: openai | Decision: openai
+============================================================
+
+[AGENT START] Across the indexed indices/.markdown_files.faiss, search the CONTENT and give the steps to create a rocketlane project.
+==================================================
+
+--- Iteration 1 ---
+ [Perception] Current Goal: Search across the indexed .markdown_files.faiss for content related to creating a Rocketlane project
+[05/30/26 09:49:53] INFO     HTTP Request: POST                         _client.py:1025
+                             http://localhost:8101/v1/chat "HTTP/1.1
+                             200 OK"
+ [Decision] Thought: Searching the .markdown_files.faiss index for steps to create a Rocketlane project.
+  >> Executing [search_faiss_index]...
+ [Action] Result: failure
+
+--- Iteration 2 ---
+[05/30/26 09:49:57] INFO     HTTP Request: POST                         _client.py:1025
+                             http://localhost:8101/v1/chat "HTTP/1.1
+                             200 OK"
+ [Perception] Current Goal: Search across all indexed indices for steps to create a Rocketlane project
+[05/30/26 09:50:00] INFO     HTTP Request: POST                         _client.py:1025
+                             http://localhost:8101/v1/chat "HTTP/1.1
+                             200 OK"
+ [Decision] Thought: Searching across all available indices for steps to create a Rocketlane project since the specific .markdown_files.faiss index is not available.
+  >> Executing [search_all_indices]...
+                    INFO     HTTP Request: POST                         _client.py:1740
+                             http://localhost:8101/v1/embed "HTTP/1.1
+                             200 OK"
+ [Memory] Size 17.6KB > 4KB. Starting FAISS indexing for raw_output_search_all_indices...
+                    INFO     HTTP Request: POST                         _client.py:1740
+                             http://localhost:8101/v1/embed "HTTP/1.1
+                             200 OK"
+                    INFO     HTTP Request: POST                         _client.py:1740
+                             http://localhost:8101/v1/embed "HTTP/1.1
+                             200 OK"
+                    INFO     HTTP Request: POST                         _client.py:1740
+                             http://localhost:8101/v1/embed "HTTP/1.1
+                             200 OK"
+                    INFO     HTTP Request: POST                         _client.py:1740
+                             http://localhost:8101/v1/embed "HTTP/1.1
+                             200 OK"
+                    INFO     HTTP Request: POST                         _client.py:1740
+                             http://localhost:8101/v1/embed "HTTP/1.1
+                             200 OK"
+                    INFO     HTTP Request: POST                         _client.py:1740
+                             http://localhost:8101/v1/embed "HTTP/1.1
+                             200 OK"
+                    INFO     HTTP Request: POST                         _client.py:1740
+                             http://localhost:8101/v1/embed "HTTP/1.1
+                             200 OK"
+[05/30/26 09:50:01] INFO     HTTP Request: POST                         _client.py:1740
+                             http://localhost:8101/v1/embed "HTTP/1.1
+                             200 OK"
+                    INFO     HTTP Request: POST                         _client.py:1740
+                             http://localhost:8101/v1/embed "HTTP/1.1
+                             200 OK"
+                    INFO     HTTP Request: POST                         _client.py:1740
+                             http://localhost:8101/v1/embed "HTTP/1.1
+                             200 OK"
+                    INFO     HTTP Request: POST                         _client.py:1740
+                             http://localhost:8101/v1/embed "HTTP/1.1
+                             200 OK"
+                    INFO     HTTP Request: POST                         _client.py:1740
+                             http://localhost:8101/v1/embed "HTTP/1.1
+                             200 OK"
+                    INFO     HTTP Request: POST                         _client.py:1740
+                             http://localhost:8101/v1/embed "HTTP/1.1
+                             200 OK"
+                    INFO     HTTP Request: POST                         _client.py:1740
+                             http://localhost:8101/v1/embed "HTTP/1.1
+                             200 OK"
+                    INFO     HTTP Request: POST                         _client.py:1740
+                             http://localhost:8101/v1/embed "HTTP/1.1
+                             200 OK"
+                    INFO     HTTP Request: POST                         _client.py:1740
+                             http://localhost:8101/v1/embed "HTTP/1.1
+                             200 OK"
+[05/30/26 09:50:02] INFO     HTTP Request: POST                         _client.py:1740
+                             http://localhost:8101/v1/embed "HTTP/1.1
+                             200 OK"
+ [Memory] FAISS index created: indices/20260530_095000_raw_output_search_all_indices.faiss
+ [Action] Result: success
+
+--- Iteration 3 ---
+[05/30/26 09:50:07] INFO     HTTP Request: POST                         _client.py:1025
+                             http://localhost:8101/v1/chat "HTTP/1.1
+                             200 OK"
+ [Perception] All goals satisfied.
+
+============================================================
+  FINAL AGENT RESPONSE
+============================================================
+The search across all indices returned a detailed list of steps to create a Rocketlane project including pressing 'N', typing task name, choosing project, adding assignees, due date, task description, and options for creating tasks (public/private). This information is from the artifact 20260530_095000_raw_output_search_all_indices.json.

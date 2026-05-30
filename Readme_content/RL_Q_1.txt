@@ -1,0 +1,100 @@
+ [System] Gateway already detected at http://localhost:8101.
+
+============================================================
+  EAGv3 AGENTIC ORCHESTRATOR ACTIVE
+  Perception: openai | Decision: openai
+============================================================
+
+[AGENT START] Across the indexed indices/.markdown_files.faiss, search the CONTENT and give the steps to invite teams to Rocketlane.
+==================================================
+
+--- Iteration 1 ---
+ [Perception] Current Goal: Search .markdown_files.faiss for steps to invite teams to Rocketlane
+[05/30/26 09:15:36] INFO     HTTP Request: POST                      _client.py:1025
+                             http://localhost:8101/v1/chat "HTTP/1.1
+                             200 OK"
+ [Decision] Thought: Searching the .markdown_files.faiss index for detailed steps on how to invite teams to Rocketlane.
+  >> Executing [search_faiss_index]...
+ [Action] Result: failure
+
+--- Iteration 2 ---
+[05/30/26 09:15:40] INFO     HTTP Request: POST                      _client.py:1025
+                             http://localhost:8101/v1/chat "HTTP/1.1
+                             200 OK"
+ [Perception] Current Goal: Search for steps to invite teams to Rocketlane across all indexed indices
+[05/30/26 09:15:41] INFO     HTTP Request: POST                      _client.py:1025
+                             http://localhost:8101/v1/chat "HTTP/1.1
+                             200 OK"
+ [Decision] Thought: Searching across all indices for specific steps to invite teams to Rocketlane.
+  >> Executing [search_all_indices]...
+                    INFO     HTTP Request: POST                      _client.py:1740
+                             http://localhost:8101/v1/embed
+                             "HTTP/1.1 200 OK"
+ [Memory] Size 18.6KB > 4KB. Starting FAISS indexing for raw_output_search_all_indices...
+[05/30/26 09:15:42] INFO     HTTP Request: POST                      _client.py:1740
+                             http://localhost:8101/v1/embed
+                             "HTTP/1.1 200 OK"
+                    INFO     HTTP Request: POST                      _client.py:1740
+                             http://localhost:8101/v1/embed
+                             "HTTP/1.1 200 OK"
+                    INFO     HTTP Request: POST                      _client.py:1740
+                             http://localhost:8101/v1/embed
+                             "HTTP/1.1 200 OK"
+                    INFO     HTTP Request: POST                      _client.py:1740
+                             http://localhost:8101/v1/embed
+                             "HTTP/1.1 200 OK"
+                    INFO     HTTP Request: POST                      _client.py:1740
+                             http://localhost:8101/v1/embed
+                             "HTTP/1.1 200 OK"
+                    INFO     HTTP Request: POST                      _client.py:1740
+                             http://localhost:8101/v1/embed
+                             "HTTP/1.1 200 OK"
+                    INFO     HTTP Request: POST                      _client.py:1740
+                             http://localhost:8101/v1/embed
+                             "HTTP/1.1 200 OK"
+                    INFO     HTTP Request: POST                      _client.py:1740
+                             http://localhost:8101/v1/embed
+                             "HTTP/1.1 200 OK"
+[05/30/26 09:15:43] INFO     HTTP Request: POST                      _client.py:1740
+                             http://localhost:8101/v1/embed
+                             "HTTP/1.1 200 OK"
+                    INFO     HTTP Request: POST                      _client.py:1740
+                             http://localhost:8101/v1/embed
+                             "HTTP/1.1 200 OK"
+                    INFO     HTTP Request: POST                      _client.py:1740
+                             http://localhost:8101/v1/embed
+                             "HTTP/1.1 200 OK"
+                    INFO     HTTP Request: POST                      _client.py:1740
+                             http://localhost:8101/v1/embed
+                             "HTTP/1.1 200 OK"
+                    INFO     HTTP Request: POST                      _client.py:1740
+                             http://localhost:8101/v1/embed
+                             "HTTP/1.1 200 OK"
+                    INFO     HTTP Request: POST                      _client.py:1740
+                             http://localhost:8101/v1/embed
+                             "HTTP/1.1 200 OK"
+                    INFO     HTTP Request: POST                      _client.py:1740
+                             http://localhost:8101/v1/embed
+                             "HTTP/1.1 200 OK"
+                    INFO     HTTP Request: POST                      _client.py:1740
+                             http://localhost:8101/v1/embed
+                             "HTTP/1.1 200 OK"
+                    INFO     HTTP Request: POST                      _client.py:1740
+                             http://localhost:8101/v1/embed
+                             "HTTP/1.1 200 OK"
+                    INFO     HTTP Request: POST                      _client.py:1740
+                             http://localhost:8101/v1/embed
+                             "HTTP/1.1 200 OK"
+ [Memory] FAISS index created: indices/20260530_091541_raw_output_search_all_indices.faiss
+ [Action] Result: success
+
+--- Iteration 3 ---
+[05/30/26 09:15:48] INFO     HTTP Request: POST                      _client.py:1025
+                             http://localhost:8101/v1/chat "HTTP/1.1
+                             200 OK"
+ [Perception] All goals satisfied.
+
+============================================================
+  FINAL AGENT RESPONSE
+============================================================
+Found detailed steps to invite team members to a project in Rocketlane from the search across all indices. Steps include selecting the project, clicking 'Invite' from the top-right corner, adding team members by searching their names within the organization or adding external members via email ids, and recognizing project owner by a Crown icon next to their name.

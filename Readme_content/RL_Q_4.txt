@@ -1,0 +1,52 @@
+ [System] Gateway already detected at http://localhost:8101.
+
+============================================================
+  EAGv3 AGENTIC ORCHESTRATOR ACTIVE
+  Perception: openai | Decision: openai
+============================================================
+
+[AGENT START] Across the indexed indices/.markdown_files.faiss, search the CONTENT and give the steps to create a task in a rocketlane project.
+==================================================
+
+--- Iteration 1 ---
+ [Perception] Current Goal: Search the indexed index /.markdown_files.faiss for content related to creating a task in a Rocketlane project
+[05/30/26 10:15:20] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                                               _client.py:1025
+ [Decision] Thought: Searching the indexed markdown files for steps to create a task in a Rocketlane project.
+  >> Executing [search_faiss_index]...
+ [Action] Result: failure
+
+--- Iteration 2 ---
+[05/30/26 10:15:24] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                                               _client.py:1025
+ [Perception] Current Goal: Search across all indexed indices for steps to create a task in Rocketlane project
+[05/30/26 10:15:25] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                                               _client.py:1025
+ [Decision] Thought: Searching across all indexed indices for relevant information on creating a task in a Rocketlane project.
+  >> Executing [search_all_indices]...
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+ [Memory] Size 14.7KB > 4KB. Starting FAISS indexing for raw_output_search_all_indices...
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+[05/30/26 10:15:26] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+[05/30/26 10:15:27] INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+                    INFO     HTTP Request: POST http://localhost:8101/v1/embed "HTTP/1.1 200 OK"                                              _client.py:1740
+ [Memory] FAISS index created: indices/20260530_101525_raw_output_search_all_indices.faiss
+ [Action] Result: success
+
+--- Iteration 3 ---
+[05/30/26 10:15:32] INFO     HTTP Request: POST http://localhost:8101/v1/chat "HTTP/1.1 200 OK"                                               _client.py:1025
+ [Perception] All goals satisfied.
+
+============================================================
+  FINAL AGENT RESPONSE
+============================================================
+The search across all indexed indices found relevant content describing the steps to create a task in a Rocketlane project. The steps include pressing key 'N' while logged in, typing a task name and choosing a project, adding assignees, due date, and description, selecting create options for public or private tasks, and then the task is created and opened. Additional information on adding bulk tasks is also available.
