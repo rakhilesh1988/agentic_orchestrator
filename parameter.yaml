@@ -28,11 +28,11 @@
 # RAG Document Fetcher:
 # query: "Index all .md files within every subfolder under website/. into the vector database. After indexing, confirm how many chunks were indexed in total."
 
-# query: "Across the indexed indices/.markdown_files.faiss, search the CONTENT and give the steps to invite teams to Rocketlane."
-# query: "Across the indexed indices/.markdown_files.faiss, search the CONTENT and give the steps to create a rocketlane project."
-# query: "Across the indexed indices/.markdown_files.faiss, search the CONTENT and give the steps to add a document to a rocketlane project."
-# query: "Across the indexed indices/.markdown_files.faiss, search the CONTENT and give the steps to create a task in a rocketlane project."
-query: "Across the indexed indices/.markdown_files.faiss, search the CONTENT and give the steps to create workflow automations in a rocketlane project."
+# query: "Across the indexed indices/markdown_files.faiss, search the CONTENT and give the steps to invite teams to Rocketlane."
+# query: "Across the indexed indices/markdown_files.faiss, search the CONTENT and give the steps to create a rocketlane project."
+# query: "Across the indexed indices/markdown_files.faiss, search the CONTENT and give the steps to add a document to a rocketlane project."
+# query: "Across the indexed indices/markdown_files.faiss, search the CONTENT and give the steps to create a task in a rocketlane project."
+query: "Across the indexed indices/markdown_files.faiss, search the CONTENT and give the steps to create workflow automations in a rocketlane project."
 
 perception:
   provider: "openai"
